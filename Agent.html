@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NutriAgent — AI Health & Diet Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f3;
+      --bg-tertiary: #eeede9;
+      --bg-info: #e6f1fb;
+      --bg-success: #eaf3de;
+      --bg-warning: #faeeda;
+      --bg-danger: #fcebeb;
+      --text-primary: #1a1a18;
+      --text-secondary: #5f5e5a;
+      --text-tertiary: #888780;
+      --text-info: #185fa5;
+      --text-success: #3b6d11;
+      --text-warning: #854f0b;
+      --text-danger: #a32d2d;
+      --border-tertiary: rgba(26,26,24,0.15);
+      --border-secondary: rgba(26,26,24,0.3);
+      --border-info: #378add;
+      --border-success: #639922;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1e1e1c;
+        --bg-secondary: #2a2a28;
+        --bg-tertiary: #333330;
+        --bg-info: #042c53;
+        --bg-success: #173404;
+        --bg-warning: #412402;
+        --bg-danger: #501313;
+        --text-primary: #f0ede6;
+        --text-secondary: #b4b2a9;
+        --text-tertiary: #888780;
+        --text-info: #85b7eb;
+        --text-success: #97c459;
+        --text-warning: #ef9f27;
+        --text-danger: #f09595;
+        --border-tertiary: rgba(240,237,230,0.15);
+        --border-secondary: rgba(240,237,230,0.3);
+        --border-info: #378add;
+        --border-success: #639922;
+      }
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    #app {
+      max-width: 860px;
+      margin: 0 auto;
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      border: 0.5px solid var(--border-tertiary);
+      padding: 1.75rem;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 0.5px solid var(--border-tertiary);
+    }
+    .header-icon {
+      width: 46px; height: 46px;
+      background: var(--bg-success);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 24px; font-weight: 400;
+      color: var(--text-primary);
+    }
+    .header p { font-size: 13px; color: var(--text-secondary); }
+    .agent-badge {
+      margin-left: auto;
+      background: var(--bg-success);
+      color: var(--text-success);
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 0.5px solid var(--border-success);
+      font-weight: 500;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 1.25rem;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 4px;
+    }
+    .tab {
+      flex: 1;
+      padding: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.15s;
+    }
+    .tab.active {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border: 0.5px solid var(--border-secondary);
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border-tertiary);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .card-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 17px;
+      font-weight: 400;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+    }
+
+    /* ── Inputs ── */
+    input, select, textarea {
+      border: 0.5px solid var(--border-secondary);
+      border-radius: var(--radius-md);
+      padding: 9px 12px;
+      font-size: 14px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      width: 100%;
+    }
+    input:focus, select:focus { border-color: var(--border-info); }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      background: var(--bg-info);
+      color: var(--text-info);
+      border: 0.5px solid var(--border-info);
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      white-space: nowrap;
+    }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 0.5px solid var(--border-secondary);
+      border-radius: var(--radius-md);
+      padding: 9px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn-secondary:hover { background: var(--bg-secondary); }
+
+    /* ── Meal Log ── */
+    .meal-log-area {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .meal-type-select {
+      min-width: 110px;
+      flex-shrink: 0;
+      width: auto;
+    }
+    .meal-input { flex: 1; min-width: 180px; }
+    .meal-entry {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 0.5px solid var(--border-tertiary);
+      gap: 10px;
+    }
+    .meal-entry:last-child { border-bottom: none; }
+    .meal-type-badge {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 20px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .badge-breakfast { background: var(--bg-warning); color: var(--text-warning); }
+    .badge-lunch     { background: var(--bg-success);  color: var(--text-success); }
+    .badge-dinner    { background: var(--bg-info);     color: var(--text-info); }
+    .badge-snack     { background: var(--bg-secondary); color: var(--text-secondary); border: 0.5px solid var(--border-secondary); }
+    .meal-text { font-size: 14px; flex: 1; }
+    .meal-time { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+    .meal-cals { font-size: 13px; color: var(--text-secondary); flex-shrink: 0; }
+    .delete-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-tertiary);
+      font-size: 18px;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .delete-btn:hover { color: var(--text-danger); }
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-tertiary);
+      font-size: 14px;
+    }
+
+    /* ── Water ── */
+    .water-track { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.5rem; }
+    .water-glass {
+      width: 38px; height: 38px;
+      border: 1.5px solid var(--border-secondary);
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      background: transparent;
+      transition: all 0.15s;
+    }
+    .water-glass.filled { background: var(--bg-info); border-color: var(--border-info); }
+
+    /* ── Steps ── */
+    .steps-row { display: flex; align-items: center; gap: 12px; margin-top: 0.5rem; }
+    input[type=range] { flex: 1; accent-color: var(--border-info); }
+
+    /* ── Metrics ── */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+    .metric-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem;
+      text-align: center;
+    }
+    .metric-value { font-size: 22px; font-weight: 500; color: var(--text-primary); }
+    .metric-label { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+    .metric-sub   { font-size: 10px; color: var(--text-tertiary); margin-top: 1px; }
+
+    /* ── Progress bars ── */
+    .nutrient-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .nutrient-name { font-size: 13px; min-width: 80px; color: var(--text-secondary); }
+    .nutrient-bar  { flex: 1; }
+    .nutrient-val  { font-size: 12px; color: var(--text-secondary); min-width: 70px; text-align: right; }
+    .progress-wrap { height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+
+    /* ── AI output ── */
+    .ai-response {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--border-success);
+      padding: 12px 14px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .ai-thinking {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      padding: 10px 0;
+    }
+    .dot-pulse { display: flex; gap: 4px; }
+    .dot-pulse span {
+      width: 6px; height: 6px;
+      background: var(--text-tertiary);
+      border-radius: 50%;
+      animation: pulse 1.2s infinite;
+    }
+    .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+    .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes pulse {
+      0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+      30% { opacity: 1; transform: scale(1); }
+    }
+
+    /* ── Profile form ── */
+    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .field-group { display: flex; flex-direction: column; gap: 4px; }
+    .field-group label { font-size: 12px; color: var(--text-secondary); }
+    .full-width { grid-column: 1 / -1; }
+
+    /* ── Chat ── */
+    .chat-area {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 340px;
+      overflow-y: auto;
+      margin-bottom: 0.75rem;
+      padding-right: 4px;
+    }
+    .chat-bubble {
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      max-width: 85%;
+      word-break: break-word;
+    }
+    .chat-user  { background: var(--bg-info);      color: var(--text-info);    align-self: flex-end; }
+    .chat-agent { background: var(--bg-secondary);  color: var(--text-primary); align-self: flex-start; border: 0.5px solid var(--border-tertiary); white-space: pre-wrap; }
+    .chat-input-row { display: flex; gap: 8px; }
+    .quick-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+
+    /* ── Analyze buttons ── */
+    .analyze-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+
+    @media (max-width: 600px) {
+      .metrics-row { grid-template-columns: repeat(2, 1fr); }
+      .profile-grid { grid-template-columns: 1fr; }
+      .full-width { grid-column: 1; }
+      .tabs .tab { font-size: 11px; padding: 7px 4px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon">🥗</div>
+    <div>
+      <h1>NutriAgent</h1>
+      <p>AI-powered food &amp; health tracker</p>
+    </div>
+    <span class="agent-badge">Agent online</span>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('log')">Log Food</button>
+    <button class="tab" onclick="switchTab('analysis')">AI Analysis</button>
+    <button class="tab" onclick="switchTab('health')">Health Stats</button>
+    <button class="tab" onclick="switchTab('chat')">Ask Agent</button>
+  </div>
+
+  <!-- ════════ TAB: LOG FOOD ════════ -->
+  <div id="tab-log" class="panel active">
+    <div class="card">
+      <div class="card-label">Today's Meals</div>
+      <div class="meal-log-area">
+        <select class="meal-type-select" id="meal-type">
+          <option value="breakfast">Breakfast</option>
+          <option value="lunch">Lunch</option>
+          <option value="dinner">Dinner</option>
+          <option value="snack">Snack</option>
+        </select>
+        <input class="meal-input" id="meal-input" placeholder="e.g. 2 eggs, toast, orange juice..."
+               onkeydown="if(event.key==='Enter') logMeal()" />
+        <button class="btn-primary" id="log-btn" onclick="logMeal()">Log ↗</button>
+      </div>
+      <div id="meals-list"><div class="empty-state">No meals logged yet today.</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Water Intake</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Tap glasses to track (1 glass = 250 ml)</div>
+      <div class="water-track" id="water-glasses"></div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-top:8px;" id="water-label">0 / 8 glasses today</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Steps Today</div>
+      <div class="steps-row">
+        <input type="range" min="0" max="20000" value="0" step="500"
+               id="steps-slider" oninput="updateSteps(this.value)" />
+        <span id="steps-val" style="font-size:20px;font-weight:500;min-width:70px;">0</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Goal: 10,000 steps</div>
+    </div>
+  </div>
+
+  <!-- ════════ TAB: AI ANALYSIS ════════ -->
+  <div id="tab-analysis" class="panel">
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-value" id="total-cals">0</div>
+        <div class="metric-label">kcal today</div>
+        <div class="metric-sub" id="cal-goal-sub">goal: —</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="protein-val">0g</div>
+        <div class="metric-label">protein</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="carbs-val">0g</div>
+        <div class="metric-label">carbs</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="fat-val">0g</div>
+        <div class="metric-label">fat</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Macro breakdown</div>
+      <div class="nutrient-row">
+        <span class="nutrient-name">Protein</span>
+        <div class="nutrient-bar"><div class="progress-wrap"><div class="progress-fill" id="pb-protein" style="background:#5DCAA5;width:0%"></div></div></div>
+        <span class="nutrient-val" id="pv-protein">0 / 120g</span>
+      </div>
+      <div class="nutrient-row">
+        <span class="nutrient-name">Carbs</span>
+        <div class="nutrient-bar"><div class="progress-wrap"><div class="progress-fill" id="pb-carbs" style="background:#FAC775;width:0%"></div></div></div>
+        <span class="nutrient-val" id="pv-carbs">0 / 250g</span>
+      </div>
+      <div class="nutrient-row">
+        <span class="nutrient-name">Fat</span>
+        <div class="nutrient-bar"><div class="progress-wrap"><div class="progress-fill" id="pb-fat" style="background:#F0997B;width:0%"></div></div></div>
+        <span class="nutrient-val" id="pv-fat">0 / 70g</span>
+      </div>
+      <div class="nutrient-row">
+        <span class="nutrient-name">Calories</span>
+        <div class="nutrient-bar"><div class="progress-wrap"><div class="progress-fill" id="pb-cals" style="background:#85B7EB;width:0%"></div></div></div>
+        <span class="nutrient-val" id="pv-cals">0 / 2000</span>
+      </div>
+      <div class="nutrient-row">
+        <span class="nutrient-name">Water</span>
+        <div class="nutrient-bar"><div class="progress-wrap"><div class="progress-fill" id="pb-water" style="background:#85B7EB;width:0%"></div></div></div>
+        <span class="nutrient-val" id="pv-water">0 / 2000ml</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">AI Nutrition Analysis</div>
+      <div class="analyze-row">
+        <button class="btn-primary"  onclick="analyzeDay()">Analyze today's diet ↗</button>
+        <button class="btn-secondary" onclick="getSuggestions()">Suggest improvements</button>
+        <button class="btn-secondary" onclick="getMealPlan()">Generate meal plan</button>
+      </div>
+      <div id="analysis-output"></div>
+    </div>
+  </div>
+
+  <!-- ════════ TAB: HEALTH STATS ════════ -->
+  <div id="tab-health" class="panel">
+    <div class="card">
+      <div class="section-title">Your Profile</div>
+      <div class="profile-grid">
+        <div class="field-group">
+          <label>Name</label>
+          <input id="p-name" placeholder="Your name" />
+        </div>
+        <div class="field-group">
+          <label>Age</label>
+          <input id="p-age" type="number" placeholder="e.g. 28" min="10" max="100" />
+        </div>
+        <div class="field-group">
+          <label>Weight (kg)</label>
+          <input id="p-weight" type="number" placeholder="e.g. 70" />
+        </div>
+        <div class="field-group">
+          <label>Height (cm)</label>
+          <input id="p-height" type="number" placeholder="e.g. 170" />
+        </div>
+        <div class="field-group">
+          <label>Gender</label>
+          <select id="p-gender">
+            <option value="">Select</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Activity level</label>
+          <select id="p-activity">
+            <option value="sedentary">Sedentary</option>
+            <option value="light">Lightly active</option>
+            <option value="moderate" selected>Moderately active</option>
+            <option value="active">Very active</option>
+          </select>
+        </div>
+        <div class="field-group full-width">
+          <label>Goal</label>
+          <select id="p-goal">
+            <option value="lose">Lose weight</option>
+            <option value="maintain" selected>Maintain weight</option>
+            <option value="gain">Gain muscle</option>
+            <option value="health">General health</option>
+          </select>
+        </div>
+        <div class="field-group full-width">
+          <label>Dietary restrictions / allergies</label>
+          <input id="p-diet" placeholder="e.g. vegetarian, lactose intolerant, nut allergy..." />
+        </div>
+        <div class="field-group full-width">
+          <label>Health conditions</label>
+          <input id="p-conditions" placeholder="e.g. diabetes, high blood pressure..." />
+        </div>
+        <div class="full-width" style="margin-top:4px;">
+          <button class="btn-primary" onclick="saveProfile()">Save &amp; Calculate ↗</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="bmi-card" style="display:none;" class="card">
+      <div class="section-title">Calculated Stats</div>
+      <div class="metrics-row" style="grid-template-columns:repeat(3,minmax(0,1fr));">
+        <div class="metric-card">
+          <div class="metric-value" id="bmi-val">—</div>
+          <div class="metric-label">BMI</div>
+          <div class="metric-sub" id="bmi-cat">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="bmr-val">—</div>
+          <div class="metric-label">BMR (kcal/day)</div>
+          <div class="metric-sub">base metabolism</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="tdee-val">—</div>
+          <div class="metric-label">Daily calorie goal</div>
+          <div class="metric-sub" id="tdee-sub">—</div>
+        </div>
+      </div>
+      <div id="health-advice-out" style="margin-top:0.75rem;"></div>
+    </div>
+  </div>
+
+  <!-- ════════ TAB: ASK AGENT ════════ -->
+  <div id="tab-chat" class="panel">
+    <div class="card">
+      <div class="section-title">Ask your health agent</div>
+      <div class="chat-area" id="chat-area">
+        <div class="chat-bubble chat-agent">Hi! I'm your personal NutriAgent 🥗 Ask me anything about your diet, nutrition, meal planning, or health goals. I can also analyze what you've logged today!</div>
+      </div>
+      <div class="chat-input-row">
+        <input class="meal-input" id="chat-input"
+               placeholder="Ask me anything about your health &amp; diet..."
+               onkeydown="if(event.key==='Enter') sendChat()" />
+        <button class="btn-primary" onclick="sendChat()">Send ↗</button>
+      </div>
+      <div class="quick-btns">
+        <button class="btn-secondary" onclick="quickAsk('What should I eat for more energy?')">More energy?</button>
+        <button class="btn-secondary" onclick="quickAsk('Am I eating enough protein today?')">Protein check</button>
+        <button class="btn-secondary" onclick="quickAsk('Give me a healthy snack idea')">Snack idea</button>
+        <button class="btn-secondary" onclick="quickAsk('How can I improve my gut health?')">Gut health</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<script>
+  // ─── State ───────────────────────────────────────────────────
+  const state = {
+    meals: [],
+    water: 0,
+    steps: 0,
+    profile: {},
+    calorieGoal: 2000,
+    chatHistory: []
+  };
+
+  // ─── Tabs ─────────────────────────────────────────────────────
+  function switchTab(name) {
+    const names = ['log', 'analysis', 'health', 'chat'];
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', names[i] === name));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    if (name === 'analysis') updateAnalysisPanel();
+  }
+
+  // ─── Water glasses ────────────────────────────────────────────
+  const waterEl = document.getElementById('water-glasses');
+  for (let i = 0; i < 8; i++) {
+    const g = document.createElement('button');
+    g.className = 'water-glass';
+    g.textContent = '🥛';
+    g.dataset.idx = i;
+    g.onclick = () => toggleWater(i);
+    waterEl.appendChild(g);
+  }
+
+  function toggleWater(idx) {
+    state.water = idx < state.water ? idx : idx + 1;
+    document.querySelectorAll('.water-glass').forEach((g, i) => g.classList.toggle('filled', i < state.water));
+    document.getElementById('water-label').textContent = state.water + ' / 8 glasses today';
+    updateMacroBars();
+  }
+
+  // ─── Steps ───────────────────────────────────────────────────
+  function updateSteps(v) {
+    state.steps = parseInt(v);
+    document.getElementById('steps-val').textContent = parseInt(v).toLocaleString();
+  }
+
+  // ─── Log meal (calls Claude API for nutrition estimate) ───────
+  async function logMeal() {
+    const input = document.getElementById('meal-input');
+    const type  = document.getElementById('meal-type').value;
+    const text  = input.value.trim();
+    if (!text) return;
+
+    const btn = document.getElementById('log-btn');
+    btn.disabled = true;
+    btn.textContent = 'Analyzing...';
+
+    try {
+      const profileCtx = state.profile.weight ? `User profile: ${JSON.stringify(state.profile)}.` : '';
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: `You are a nutrition expert. When given a meal description, return ONLY valid JSON like:
+{"calories":350,"protein":20,"carbs":45,"fat":12,"summary":"2 eggs with toast and OJ"}
+Be realistic with estimates. No markdown, no explanation, no preamble — just raw JSON.`,
+          messages: [{ role: 'user', content: `${profileCtx} Estimate nutrition for: ${text}` }]
+        })
+      });
+      const data = await res.json();
+      let nutrition = { calories: 200, protein: 10, carbs: 25, fat: 8, summary: text };
+      try {
+        const txt   = data.content.map(c => c.text || '').join('');
+        const clean = txt.replace(/```json|```/g, '').trim();
+        nutrition   = JSON.parse(clean);
+      } catch (_) {}
+
+      state.meals.push({ type, text, nutrition, time: now() });
+    } catch (_) {
+      // Fallback if API call fails
+      state.meals.push({ type, text, nutrition: { calories: 200, protein: 10, carbs: 25, fat: 8, summary: text }, time: now() });
+    }
+
+    input.value = '';
+    btn.disabled = false;
+    btn.textContent = 'Log ↗';
+    renderMeals();
+    updateAnalysisPanel();
+  }
+
+  function now() {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // ─── Render meal list ─────────────────────────────────────────
+  function renderMeals() {
+    const el = document.getElementById('meals-list');
+    if (!state.meals.length) {
+      el.innerHTML = '<div class="empty-state">No meals logged yet today.</div>';
+      return;
+    }
+    el.innerHTML = state.meals.map((m, i) => `
+      <div class="meal-entry">
+        <span class="meal-type-badge badge-${m.type}">${m.type}</span>
+        <div style="flex:1">
+          <div class="meal-text">${m.nutrition.summary || m.text}</div>
+          <div class="meal-time">${m.time}</div>
+        </div>
+        <span class="meal-cals">${Math.round(m.nutrition.calories)} kcal</span>
+        <button class="delete-btn" onclick="deleteMeal(${i})">×</button>
+      </div>
+    `).join('');
+  }
+
+  function deleteMeal(i) {
+    state.meals.splice(i, 1);
+    renderMeals();
+    updateAnalysisPanel();
+  }
+
+  // ─── Totals ───────────────────────────────────────────────────
+  function getTotals() {
+    return state.meals.reduce((acc, m) => ({
+      calories: acc.calories + (m.nutrition.calories || 0),
+      protein:  acc.protein  + (m.nutrition.protein  || 0),
+      carbs:    acc.carbs    + (m.nutrition.carbs     || 0),
+      fat:      acc.fat      + (m.nutrition.fat       || 0)
+    }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+  }
+
+  // ─── Update analysis panel ────────────────────────────────────
+  function updateAnalysisPanel() {
+    const t    = getTotals();
+    const goal = state.calorieGoal || 2000;
+    document.getElementById('total-cals').textContent  = Math.round(t.calories);
+    document.getElementById('protein-val').textContent = Math.round(t.protein)  + 'g';
+    document.getElementById('carbs-val').textContent   = Math.round(t.carbs)    + 'g';
+    document.getElementById('fat-val').textContent     = Math.round(t.fat)      + 'g';
+    document.getElementById('cal-goal-sub').textContent = 'goal: ' + goal + ' kcal';
+    updateMacroBars();
+  }
+
+  function updateMacroBars() {
+    const t    = getTotals();
+    const goal = state.calorieGoal || 2000;
+    const pg   = state.profile.gender === 'female' ? 100 : 120;
+    const cg   = Math.round(goal * 0.5 / 4);
+    const fg   = Math.round(goal * 0.25 / 9);
+    const wg   = 2000;
+
+    setBar('protein', t.protein,       pg,   t.protein,       'g');
+    setBar('carbs',   t.carbs,         cg,   t.carbs,         'g');
+    setBar('fat',     t.fat,           fg,   t.fat,           'g');
+    setBar('cals',    t.calories,      goal, t.calories,      '');
+    setBar('water',   state.water*250, wg,   state.water*250, 'ml');
+  }
+
+  function setBar(id, val, max, display, unit) {
+    const pct = Math.min(100, Math.round(val / max * 100));
+    document.getElementById('pb-' + id).style.width = pct + '%';
+    document.getElementById('pv-' + id).textContent = Math.round(display) + unit + ' / ' + max + (id === 'cals' ? '' : unit);
+  }
+
+  // ─── AI agent helper ─────────────────────────────────────────
+  async function callAgent(prompt, outEl) {
+    outEl.innerHTML = '<div class="ai-thinking"><div class="dot-pulse"><span></span><span></span><span></span></div> Agent is thinking…</div>';
+
+    const totals  = getTotals();
+    const mealLog = state.meals.length
+      ? state.meals.map(m => `${m.type}: ${m.nutrition.summary || m.text} (${Math.round(m.nutrition.calories)} kcal, P:${Math.round(m.nutrition.protein)}g, C:${Math.round(m.nutrition.carbs)}g, F:${Math.round(m.nutrition.fat)}g)`).join('\n')
+      : 'No meals logged yet.';
+
+    const context = `User profile: ${JSON.stringify(state.profile) || 'unknown'}
+Daily calorie goal: ${state.calorieGoal} kcal
+Today's food log:
+${mealLog}
+Totals: ${Math.round(totals.calories)} kcal — Protein: ${Math.round(totals.protein)}g, Carbs: ${Math.round(totals.carbs)}g, Fat: ${Math.round(totals.fat)}g
+Water: ${state.water} glasses (${state.water * 250} ml)
+Steps: ${state.steps.toLocaleString()}`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: `You are NutriAgent, a warm and expert personal nutrition and health coach. Use the user's data context to give specific, actionable advice. Be concise but insightful. Use bullet points where helpful. Never use markdown headers with #.`,
+          messages: [{ role: 'user', content: `${context}\n\n${prompt}` }]
+        })
+      });
+      const data = await res.json();
+      const txt  = data.content.map(c => c.text || '').join('');
+      outEl.innerHTML = `<div class="ai-response">${txt}</div>`;
+      return txt;
+    } catch (e) {
+      outEl.innerHTML = '<div class="ai-response">Could not reach the agent. Please check your connection and try again.</div>';
+      return '';
+    }
+  }
+
+  // ─── Analysis buttons ─────────────────────────────────────────
+  function analyzeDay() {
+    callAgent('Analyze my diet for today. Comment on balance, missing nutrients, and overall healthiness.', document.getElementById('analysis-output'));
+  }
+  function getSuggestions() {
+    callAgent("Based on what I've eaten today, suggest specific improvements — foods to add, swap, or avoid. Be practical.", document.getElementById('analysis-output'));
+  }
+  function getMealPlan() {
+    callAgent('Generate a balanced meal plan for tomorrow based on my profile and goals. Include breakfast, lunch, dinner, and a snack with approximate calories.', document.getElementById('analysis-output'));
+  }
+
+  // ─── Profile save & BMR/TDEE calc ────────────────────────────
+  function saveProfile() {
+    state.profile = {
+      name:       document.getElementById('p-name').value,
+      age:        +document.getElementById('p-age').value      || 25,
+      weight:     +document.getElementById('p-weight').value   || 70,
+      height:     +document.getElementById('p-height').value   || 170,
+      gender:     document.getElementById('p-gender').value    || 'other',
+      activity:   document.getElementById('p-activity').value,
+      goal:       document.getElementById('p-goal').value,
+      diet:       document.getElementById('p-diet').value,
+      conditions: document.getElementById('p-conditions').value
+    };
+
+    const { weight, height, age, gender, activity, goal } = state.profile;
+    // Mifflin–St Jeor formula
+    const bmr = gender === 'female'
+      ? (10 * weight) + (6.25 * height) - (5 * age) - 161
+      : (10 * weight) + (6.25 * height) - (5 * age) + 5;
+    const actMult = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725 }[activity] || 1.55;
+    let tdee = Math.round(bmr * actMult);
+    if (goal === 'lose') tdee -= 400;
+    if (goal === 'gain') tdee += 300;
+    state.calorieGoal = tdee;
+
+    const bmi    = +(weight / ((height / 100) ** 2)).toFixed(1);
+    const bmiCat = bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal weight' : bmi < 30 ? 'Overweight' : 'Obese';
+    document.getElementById('bmi-val').textContent  = bmi;
+    document.getElementById('bmi-cat').textContent  = bmiCat;
+    document.getElementById('bmr-val').textContent  = Math.round(bmr);
+    document.getElementById('tdee-val').textContent = tdee;
+    document.getElementById('tdee-sub').textContent = goal === 'lose' ? 'for fat loss' : goal === 'gain' ? 'for muscle gain' : 'to maintain weight';
+    document.getElementById('bmi-card').style.display = 'block';
+
+    callAgent('Based on my profile, give me 3 personalized health tips and my ideal macro targets. Be specific.', document.getElementById('health-advice-out'));
+    updateAnalysisPanel();
+  }
+
+  // ─── Chat ─────────────────────────────────────────────────────
+  async function sendChat() {
+    const input = document.getElementById('chat-input');
+    const text  = input.value.trim();
+    if (!text) return;
+    input.value = '';
+
+    const area = document.getElementById('chat-area');
+    const userBubble = document.createElement('div');
+    userBubble.className = 'chat-bubble chat-user';
+    userBubble.textContent = text;
+    area.appendChild(userBubble);
+
+    const agentBubble = document.createElement('div');
+    agentBubble.className = 'chat-bubble chat-agent';
+    agentBubble.innerHTML = '<div class="dot-pulse"><span></span><span></span><span></span></div>';
+    area.appendChild(agentBubble);
+    area.scrollTop = area.scrollHeight;
+
+    state.chatHistory.push({ role: 'user', content: text });
+
+    const totals  = getTotals();
+    const mealLog = state.meals.length
+      ? state.meals.map(m => `${m.type}: ${m.nutrition.summary || m.text} (${Math.round(m.nutrition.calories)} kcal)`).join('; ')
+      : 'No meals yet.';
+
+    const context = `User profile: ${JSON.stringify(state.profile) || 'unknown'}. Daily calorie goal: ${state.calorieGoal}. Meals today: ${mealLog}. Totals: ${Math.round(totals.calories)} kcal, P:${Math.round(totals.protein)}g, C:${Math.round(totals.carbs)}g, F:${Math.round(totals.fat)}g. Water: ${state.water} glasses. Steps: ${state.steps.toLocaleString()}.`;
+
+    const history = state.chatHistory.slice(-6, -1).map(m => m.role + ': ' + m.content).join('\n');
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: `You are NutriAgent, a friendly and knowledgeable nutrition and health coach. Use the provided context about the user's diet and health data to give personalized, specific responses. Keep answers concise and actionable. Never use markdown # headers.`,
+          messages: [{
+            role: 'user',
+            content: `Context: ${context}\n\nRecent conversation:\n${history}\n\nUser question: ${text}`
+          }]
+        })
+      });
+      const data  = await res.json();
+      const reply = data.content.map(c => c.text || '').join('');
+      agentBubble.textContent = reply;
+      state.chatHistory.push({ role: 'assistant', content: reply });
+    } catch (_) {
+      agentBubble.textContent = 'Sorry, I had trouble connecting. Please try again.';
+    }
+    area.scrollTop = area.scrollHeight;
+  }
+
+  function quickAsk(q) {
+    document.getElementById('chat-input').value = q;
+    sendChat();
+  }
+
+  // ─── Init ─────────────────────────────────────────────────────
+  updateAnalysisPanel();
+</script>
+</body>
+</html>
