@@ -1,0 +1,2367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    (async () => {
+      try {
+        const response = await fetch('/auth/status');
+        const data = await response.json();
+        if (!data.isLoggedIn) {
+          window.location.href = 'index.html';
+        }
+      } catch (error) {
+        window.location.href = 'index.html';
+      }
+    })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NutriAgent — AI Health & Diet Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&family=Cormorant+Garamond:ital,wght@0,600;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8fafc;
+      --bg-tertiary: #f1f5f9;
+      --bg-info: #eff6ff;
+      --bg-success: #ecfdf5;
+      --bg-warning: #fffbeb;
+      --bg-danger: #fef2f2;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --text-info: #1d4ed8;
+      --text-success: #047857;
+      --text-warning: #b45309;
+      --text-danger: #b91c1c;
+      --border-tertiary: #e2e8f0;
+      --border-secondary: #cbd5e1;
+      --border-info: #3b82f6;
+      --border-success: #10b981;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1e293b;
+        --bg-secondary: #0f172a;
+        --bg-tertiary: #020617;
+        --bg-info: #1e3a8a;
+        --bg-success: #064e3b;
+        --bg-warning: #78350f;
+        --bg-danger: #7f1d1d;
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --text-tertiary: #64748b;
+        --text-info: #bfdbfe;
+        --text-success: #a7f3d0;
+        --text-warning: #fde68a;
+        --text-danger: #fecaca;
+        --border-tertiary: #334155;
+        --border-secondary: #475569;
+        --border-info: #3b82f6;
+        --border-success: #10b981;
+      }
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 0;
+      margin: 0;
+      display: flex;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      min-height: 100vh;
+      background: var(--bg-primary);
+    }
+
+    /* ── Main layout ── */
+    .main-layout {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 0 2.5rem;
+      height: 60px;
+      background: #0f172a;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+    /* Subtle gradient accent line at very bottom of header */
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(59,130,246,0.4) 30%, rgba(16,185,129,0.3) 70%, transparent);
+    }
+    .header-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .header-brand { display: flex; flex-direction: column; gap: 1px; }
+    .header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 600;
+      font-style: italic;
+      background: linear-gradient(100deg, #e2e8f0 0%, #93c5fd 55%, #6ee7b7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      letter-spacing: 0.01em;
+    }
+    .header p {
+      font-size: 10.5px;
+      color: rgba(255,255,255,0.28);
+      letter-spacing: 0.03em;
+      font-weight: 400;
+    }
+    .header-sep {
+      width: 1px;
+      height: 20px;
+      background: rgba(255,255,255,0.07);
+    }
+    .header-clock {
+      font-family: 'Outfit', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.08em;
+    }
+    .header-clock span {
+      color: rgba(255,255,255,0.55);
+      font-weight: 600;
+    }
+    /* Right-side controls */
+    .header-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .agent-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      color: rgba(52,211,153,0.85);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 5px 12px 5px 9px;
+      border-radius: 20px;
+      border: 1px solid rgba(16,185,129,0.18);
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+    .badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      flex-shrink: 0;
+      animation: badgePulse 2.4s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.75); }
+    }
+    .btn-logout {
+      padding: 5px 14px;
+      font-size: 11.5px;
+      font-weight: 500;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.38);
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.03em;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .btn-logout:hover {
+      background: rgba(239,68,68,0.1);
+      border-color: rgba(239,68,68,0.22);
+      color: rgba(252,165,165,0.85);
+    }
+
+    /* ── Sidebar Tabs ── */
+    .tabs {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      width: 230px;
+      flex-shrink: 0;
+      background: linear-gradient(180deg, #0f172a 0%, #1a2744 60%, #0f172a 100%);
+      border-right: 1px solid rgba(59,130,246,0.12);
+      padding: 1.5rem 0.85rem 1rem;
+      position: sticky;
+      top: 73px;
+      height: calc(100vh - 73px);
+      overflow-y: auto;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.18);
+    }
+    .tabs::-webkit-scrollbar { width: 4px; }
+    .tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 8px; }
+
+    .tab {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 13.5px;
+      font-weight: 500;
+      border: none;
+      background: transparent;
+      border-radius: 12px;
+      cursor: pointer;
+      color: rgba(255,255,255,0.52);
+      font-family: inherit;
+      transition: all 0.22s ease;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      letter-spacing: 0.01em;
+      position: relative;
+    }
+    .tab-icon-wrap {
+      width: 32px; height: 32px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      background: rgba(255,255,255,0.06);
+      transition: background 0.22s, transform 0.22s;
+      flex-shrink: 0;
+    }
+    .tab:not(.active):hover {
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.85);
+    }
+    .tab:not(.active):hover .tab-icon-wrap {
+      background: rgba(59,130,246,0.15);
+      transform: scale(1.08);
+    }
+    .tab.active {
+      background: rgba(59,130,246,0.14);
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(59,130,246,0.15);
+    }
+    .tab.active::before {
+      content: '';
+      position: absolute;
+      left: -0.85rem;
+      top: 20%;
+      height: 60%;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: linear-gradient(180deg, #60a5fa, #3b82f6);
+      box-shadow: 0 0 8px rgba(59,130,246,0.6);
+    }
+    .tab.active .tab-icon-wrap {
+      background: linear-gradient(135deg, #3b82f6, #60a5fa);
+      box-shadow: 0 4px 12px rgba(59,130,246,0.35);
+      transform: scale(1.08);
+    }
+    .tab-sos { color: rgba(252,165,165,0.75) !important; }
+    .tab-sos.active {
+      background: rgba(239,68,68,0.15) !important;
+      color: #fca5a5 !important;
+      box-shadow: 0 4px 16px rgba(239,68,68,0.15) !important;
+    }
+    .tab-sos.active::before { background: linear-gradient(180deg, #f87171, #ef4444) !important; box-shadow: 0 0 8px rgba(239,68,68,0.6) !important; }
+    .tab-sos.active .tab-icon-wrap { background: linear-gradient(135deg, #ef4444, #f87171) !important; box-shadow: 0 4px 12px rgba(239,68,68,0.35) !important; }
+    .tab-sos:not(.active):hover .tab-icon-wrap { background: rgba(239,68,68,0.2) !important; }
+
+    /* Sidebar section labels */
+    .sidebar-section-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: rgba(255,255,255,0.22);
+      padding: 0.75rem 12px 0.3rem;
+      margin-top: 0.25rem;
+    }
+    .sidebar-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.05);
+      margin: 0.5rem 0;
+    }
+    /* Sidebar bottom user badge */
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .sidebar-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+    }
+    .sidebar-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10b981, #3b82f6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .sidebar-user-name { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.8); }
+    .sidebar-user-status { font-size: 11px; color: rgba(16,185,129,0.85); display: flex; align-items: center; gap: 4px; margin-top: 1px; }
+    .sidebar-user-status::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; }
+
+    /* ── Content area ── */
+    .content-area {
+      flex: 1;
+      padding: 2rem 2.5rem;
+      overflow-y: auto;
+      min-width: 0;
+    }
+    .panel { display: none; animation: fadeIn 0.3s ease; }
+    .panel.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-tertiary);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+      transition: transform 0.2s ease;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+    .card-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+
+    /* ── Inputs ── */
+    input, select, textarea {
+      border: 1px solid var(--border-secondary);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      font-size: 14px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-family: inherit;
+      outline: none;
+      width: 100%;
+      transition: all 0.2s;
+    }
+    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,0.2); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-tertiary);
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { background: var(--border-tertiary); }
+
+    /* ── Meal Log ── */
+    .meal-log-area { display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
+    .meal-type-select { min-width: 120px; flex-shrink: 0; width: auto; }
+    .meal-input { flex: 1; min-width: 200px; }
+    .meal-entry {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-tertiary);
+      gap: 12px;
+    }
+    .meal-entry:last-child { border-bottom: none; }
+    .meal-type-badge {
+      font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; flex-shrink: 0;
+    }
+    .badge-breakfast { background: var(--bg-warning); color: var(--text-warning); }
+    .badge-lunch     { background: var(--bg-success);  color: var(--text-success); }
+    .badge-dinner    { background: var(--bg-info);     color: var(--text-info); }
+    .badge-snack     { background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-secondary); }
+    .meal-text { font-size: 15px; font-weight: 500; flex: 1; }
+    .meal-time { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+    .meal-cals { font-size: 14px; font-weight: 600; color: var(--text-secondary); flex-shrink: 0; }
+    .delete-btn {
+      background: none; border: none; cursor: pointer; color: var(--text-tertiary);
+      font-size: 20px; padding: 4px; transition: color 0.2s;
+    }
+    .delete-btn:hover { color: var(--text-danger); }
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-tertiary); font-size: 15px; }
+
+    /* ── Water ── */
+    .water-track { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 0.75rem; }
+    .water-glass {
+      width: 44px; height: 44px;
+      border: 2px solid var(--border-secondary);
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      background: var(--bg-primary);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .water-glass:hover { transform: scale(1.05); }
+    .water-glass.filled { background: var(--bg-info); border-color: var(--primary); transform: scale(1.05); }
+
+    /* ── Steps ── */
+    .steps-row { display: flex; align-items: center; gap: 16px; margin-top: 0.75rem; }
+    input[type=range] { flex: 1; accent-color: var(--primary); height: 6px; }
+
+    /* ── Metrics ── */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+    .metric-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      text-align: center;
+      border: 1px solid var(--border-tertiary);
+      transition: transform 0.2s;
+    }
+    .metric-card:hover { transform: translateY(-2px); }
+    .metric-value { font-size: 26px; font-weight: 600; color: var(--text-primary); }
+    .metric-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-top: 4px; }
+    .metric-sub   { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+    /* ── Progress bars ── */
+    .nutrient-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .nutrient-name { font-size: 14px; font-weight: 500; min-width: 80px; color: var(--text-secondary); }
+    .nutrient-bar  { flex: 1; }
+    .nutrient-val  { font-size: 13px; font-weight: 500; color: var(--text-secondary); min-width: 80px; text-align: right; }
+    .progress-wrap { height: 8px; background: var(--bg-secondary); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    /* ── AI output ── */
+    .ai-response {
+      background: var(--bg-info);
+      border-radius: var(--radius-md);
+      border-left: 4px solid var(--primary);
+      padding: 16px 20px;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-word;
+      box-shadow: 0 4px 12px rgba(59,130,246,0.05);
+    }
+    .ai-thinking {
+      display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 14px; padding: 12px 0;
+    }
+    .dot-pulse { display: flex; gap: 4px; }
+    .dot-pulse span { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; animation: pulse 1s infinite alternate; }
+    .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+    .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes pulse { from { opacity: 0.3; transform: scale(0.8); } to { opacity: 1; transform: scale(1.2); } }
+
+    /* ── Profile form ── */
+    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field-group { display: flex; flex-direction: column; gap: 6px; }
+    .field-group label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+    .full-width { grid-column: 1 / -1; }
+
+    /* ── Chat ── */
+    /* Chat panel wrapper */
+    #tab-chat .card {
+      background: #0f172a;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 20px;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 160px);
+      min-height: 500px;
+    }
+    /* Chat header bar */
+    .chat-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 24px;
+      background: linear-gradient(90deg, rgba(16,185,129,0.08) 0%, rgba(59,130,246,0.05) 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      flex-shrink: 0;
+    }
+    .chat-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10b981, #3b82f6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.15);
+      animation: avatarGlow 3s ease-in-out infinite;
+    }
+    @keyframes avatarGlow {
+      0%,100% { box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+      50% { box-shadow: 0 0 0 6px rgba(16,185,129,0.08); }
+    }
+    .chat-panel-info { flex: 1; }
+    .chat-panel-name {
+      font-size: 15px; font-weight: 600;
+      color: #f1f5f9;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      letter-spacing: 0.02em;
+    }
+    .chat-panel-status {
+      font-size: 11px; color: #34d399;
+      display: flex; align-items: center; gap: 5px;
+      margin-top: 2px;
+    }
+    .chat-status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #10b981;
+      animation: badgePulse 2.4s ease-in-out infinite;
+    }
+    /* Message area */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      padding: 24px 24px 16px;
+      background: transparent;
+    }
+    .chat-area::-webkit-scrollbar { width: 4px; }
+    .chat-area::-webkit-scrollbar-track { background: transparent; }
+    .chat-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
+    /* Bubbles */
+    .chat-bubble {
+      border-radius: 18px;
+      padding: 13px 17px;
+      font-size: 14.5px;
+      line-height: 1.65;
+      max-width: 78%;
+      word-break: break-word;
+      animation: bubbleIn 0.25s cubic-bezier(0.16,1,0.3,1) both;
+    }
+    @keyframes bubbleIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .chat-user {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: #fff;
+      align-self: flex-end;
+      border-bottom-right-radius: 5px;
+      box-shadow: 0 4px 15px rgba(59,130,246,0.25);
+    }
+    .chat-agent {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      color: rgba(255,255,255,0.85);
+      align-self: flex-start;
+      border-bottom-left-radius: 5px;
+    }
+    /* Bottom area: quick chips + input */
+    .chat-bottom {
+      padding: 0 20px 20px;
+      flex-shrink: 0;
+    }
+    .quick-btns {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .quick-btns button {
+      background: rgba(59,130,246,0.07);
+      color: rgba(147,197,253,0.85);
+      border: 1px solid rgba(59,130,246,0.15);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .quick-btns button:hover {
+      background: rgba(59,130,246,0.15);
+      border-color: rgba(59,130,246,0.35);
+      color: #93c5fd;
+      transform: translateY(-1px);
+    }
+    .chat-input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 6px 6px 6px 18px;
+      transition: border-color 0.2s;
+    }
+    .chat-input-row:focus-within {
+      border-color: rgba(59,130,246,0.35);
+      background: rgba(255,255,255,0.06);
+    }
+    .chat-input-row input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: rgba(255,255,255,0.85);
+      font-size: 14px;
+      font-family: inherit;
+      padding: 6px 0;
+    }
+    .chat-input-row input::placeholder { color: rgba(255,255,255,0.22); }
+    .chat-send-btn {
+      width: 38px; height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+    }
+    .chat-send-btn:hover { transform: scale(1.08); box-shadow: 0 4px 14px rgba(59,130,246,0.45); }
+    /* Typing dots for agent bubble */
+    .dot-pulse { display: flex; gap: 4px; align-items: center; padding: 2px 0; }
+    .dot-pulse span {
+      width: 7px; height: 7px;
+      background: rgba(147,197,253,0.7);
+      border-radius: 50%;
+      animation: typingBounce 1.2s infinite ease-in-out;
+    }
+    .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+    .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%,60%,100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    /* ── Analyze buttons ── */
+    .analyze-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+
+    /* ── Face Scanner ── */
+    .scanner-container {
+      position: relative;
+      width: 100%;
+      max-width: 320px;
+      margin: 0 auto 1.5rem auto;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 2px solid var(--border-secondary);
+      background: #000;
+      aspect-ratio: 3/4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .video-feed {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.8;
+      transition: filter 0.3s ease;
+    }
+    .scan-line {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--primary);
+      box-shadow: 0 0 15px 4px rgba(59,130,246,0.6);
+      display: none;
+      z-index: 10;
+    }
+    @keyframes scan {
+      0% { top: 0%; }
+      50% { top: 100%; }
+      100% { top: 0%; }
+    }
+    .scanning .scan-line {
+      display: block;
+      animation: scan 2s linear infinite;
+    }
+    .scanning .video-feed {
+      filter: contrast(1.2) brightness(1.1) saturate(1.2);
+    }
+    .face-outline {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60%;
+      height: 60%;
+      border: 2px dashed rgba(255,255,255,0.4);
+      border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+      pointer-events: none;
+    }
+    .scan-results {
+      display: none;
+      animation: fadeIn 0.5s ease forwards;
+    }
+    .scan-results.active {
+      display: block;
+    }
+
+    /* ── Mental Health ── */
+    .breathe-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 0;
+      min-height: 250px;
+    }
+    .breathe-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--primary) 0%, rgba(59,130,246,0.2) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 4s ease-in-out;
+      box-shadow: 0 0 20px rgba(59,130,246,0.3);
+      margin-bottom: 2rem;
+    }
+    .breathe-circle.inhale {
+      transform: scale(1.6);
+      background: radial-gradient(circle, var(--border-success) 0%, rgba(16,185,129,0.2) 100%);
+      box-shadow: 0 0 40px rgba(16,185,129,0.4);
+    }
+    .mood-emojis {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 1.5rem;
+    }
+    .mood-emoji {
+      font-size: 32px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+      opacity: 0.6;
+    }
+    .mood-emoji:hover { transform: scale(1.1); opacity: 0.9; }
+    .mood-emoji.selected {
+      border-color: var(--primary);
+      background: var(--bg-info);
+      opacity: 1;
+      transform: scale(1.15);
+    }
+
+    @media (max-width: 860px) {
+      .tabs { width: 180px; padding: 1rem 0.5rem; }
+      .tab { font-size: 13px; padding: 10px 10px; }
+      .content-area { padding: 1.25rem; }
+    }
+    @media (max-width: 620px) {
+      .main-layout { flex-direction: column; }
+      .tabs {
+        width: 100%;
+        flex-direction: row;
+        height: auto;
+        position: static;
+        padding: 0.5rem;
+        border-right: none;
+        border-bottom: 1px solid var(--border-tertiary);
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-wrap: nowrap;
+        gap: 4px;
+      }
+      .tab { white-space: nowrap; flex-shrink: 0; }
+      .sidebar-section-label { display: none; }
+      .content-area { padding: 1rem; }
+      .metrics-row { grid-template-columns: repeat(2, 1fr); }
+      .profile-grid { grid-template-columns: 1fr; }
+      .full-width { grid-column: 1; }
+    }
+
+    /* ── Ambulance Modal ── */
+    .amb-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    .amb-modal-overlay.open { display: flex; }
+    .amb-modal {
+      background: var(--bg-primary);
+      border-radius: 24px;
+      width: 90%;
+      max-width: 640px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+      animation: modalIn 0.35s cubic-bezier(0.16,1,0.3,1) both;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(30px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .amb-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.5rem 1.75rem 1rem;
+      border-bottom: 1px solid var(--border-tertiary);
+    }
+    .amb-modal-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-primary);
+    }
+    .amb-modal-close {
+      background: var(--bg-secondary);
+      border: none;
+      border-radius: 50%;
+      width: 36px; height: 36px;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary);
+      transition: background 0.2s;
+    }
+    .amb-modal-close:hover { background: var(--bg-danger); color: var(--text-danger); }
+    .amb-modal-search {
+      padding: 1rem 1.75rem 0.75rem;
+    }
+    .amb-modal-search input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border-secondary);
+      border-radius: 12px;
+      font-size: 15px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .amb-modal-search input:focus { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.1); }
+    .amb-list {
+      overflow-y: auto;
+      flex: 1;
+      padding: 0.5rem 1.75rem 1.75rem;
+    }
+    .amb-list::-webkit-scrollbar { width: 6px; }
+    .amb-list::-webkit-scrollbar-thumb { background: var(--border-secondary); border-radius: 10px; }
+    .amb-region-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+      margin: 1.25rem 0 0.5rem;
+    }
+    .amb-entry {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border-tertiary);
+      margin-bottom: 8px;
+      transition: background 0.2s;
+    }
+    .amb-entry:hover { background: var(--bg-secondary); }
+    .amb-entry-name { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .amb-entry-sub  { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+    .amb-dial-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .amb-dial-btn:hover { background: #dc2626; transform: scale(1.04); }
+    .amb-no-results { text-align: center; padding: 2rem; color: var(--text-tertiary); font-size: 15px; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon">🥗</div>
+    <div class="header-brand">
+      <h1>NutriAgent</h1>
+      <p>AI · food &amp; health tracker</p>
+    </div>
+    <div class="header-sep"></div>
+    <div class="header-clock"><span id="live-clock">--:--:--</span></div>
+    <div class="header-actions">
+      <span class="agent-badge"><span class="badge-dot"></span>online</span>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- Tabs + Content -->
+  <div class="main-layout">
+
+    <!-- Sidebar -->
+    <div class="tabs" id="sidebar">
+
+      <div class="sidebar-section-label">Tracking</div>
+      <button class="tab active" onclick="switchTab('log')" id="tab-btn-log">
+        <span class="tab-icon-wrap">🍽️</span>Log Food
+      </button>
+      <button class="tab" onclick="switchTab('analysis')" id="tab-btn-analysis">
+        <span class="tab-icon-wrap">📊</span>AI Analysis
+      </button>
+      <button class="tab" onclick="switchTab('health')" id="tab-btn-health">
+        <span class="tab-icon-wrap">📌</span>Health Stats
+      </button>
+
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section-label">Assistant</div>
+      <button class="tab" onclick="switchTab('chat')" id="tab-btn-chat">
+        <span class="tab-icon-wrap">🤖</span>Ask Agent
+      </button>
+      <button class="tab" onclick="switchTab('scan')" id="tab-btn-scan">
+        <span class="tab-icon-wrap">📷</span>Face Scan
+      </button>
+      <button class="tab" onclick="switchTab('mental')" id="tab-btn-mental">
+        <span class="tab-icon-wrap">🧘</span>Mind &amp; Mood
+      </button>
+
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section-label">Emergency</div>
+      <button class="tab tab-sos" onclick="switchTab('emergency')" id="tab-btn-emergency">
+        <span class="tab-icon-wrap">🚨</span>Emergency SOS
+      </button>
+
+      <!-- Footer user badge -->
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-avatar">🥗</div>
+          <div>
+            <div class="sidebar-user-name">NutriAgent</div>
+            <div class="sidebar-user-status">Agent online</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content area -->
+    <div class="content-area">
+  <!-- ════════ TAB: LOG FOOD ════════ -->
+  <div id="tab-log" class="panel active">
+    <div class="card">
+      <div class="card-label">Today's Meals</div>
+      <div class="meal-log-area">
+        <select class="meal-type-select" id="meal-type">
+          <option value="breakfast">Breakfast</option>
+          <option value="lunch">Lunch</option>
+          <option value="dinner">Dinner</option>
+          <option value="snack">Snack</option>
+        </select>
+        <input class="meal-input" id="meal-input" placeholder="e.g. 2 eggs, toast, orange juice..."
+               onkeydown="if(event.key==='Enter') logMeal()" />
+        <button class="btn-primary" id="log-btn" onclick="logMeal()">Log ↗</button>
+      </div>
+      <div id="meals-list"><div class="empty-state">No meals logged yet today.</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Water Intake</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Tap glasses to track (1 glass = 250 ml)</div>
+      <div class="water-track" id="water-glasses"></div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-top:8px;" id="water-label">0 / 8 glasses today</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Steps Today</div>
+      <div class="steps-row">
+        <input type="range" min="0" max="20000" value="0" step="500"
+               id="steps-slider" oninput="updateSteps(this.value)" />
+        <span id="steps-val" style="font-size:20px;font-weight:500;min-width:70px;">0</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Goal: 10,000 steps</div>
+    </div>
+  </div>
+
+  <!-- ════════ TAB: AI ANALYSIS ════════ -->
+  <div id="tab-analysis" class="panel">
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-value" id="total-cals">0</div>
+        <div class="metric-label">kcal today</div>
+        <div class="metric-sub" id="cal-goal-sub">goal: —</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="protein-val">0g</div>
+        <div class="metric-label">protein</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="carbs-val">0g</div>
+        <div class="metric-label">carbs</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="fat-val">0g</div>
+        <div class="metric-label">fat</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Macro breakdown</div>
+      <div class="nutrient-row">
+        <span class="nutrient-name">Protein</span>
+        <div class="nutrient-bar"><div class="progress-wrap"><div class="progress-fill" id="pb-protein" style="background:#5DCAA5;width:0%"></div></div></div>
+        <span class="nutrient-val" id="pv-protein">0 / 120g</span>
+      </div>
+      <div class="nutrient-row">
+        <span class="nutrient-name">Carbs</span>
+        <div class="nutrient-bar"><div class="progress-wrap"><div class="progress-fill" id="pb-carbs" style="background:#FAC775;width:0%"></div></div></div>
+        <span class="nutrient-val" id="pv-carbs">0 / 250g</span>
+      </div>
+      <div class="nutrient-row">
+        <span class="nutrient-name">Fat</span>
+        <div class="nutrient-bar"><div class="progress-wrap"><div class="progress-fill" id="pb-fat" style="background:#F0997B;width:0%"></div></div></div>
+        <span class="nutrient-val" id="pv-fat">0 / 70g</span>
+      </div>
+      <div class="nutrient-row">
+        <span class="nutrient-name">Calories</span>
+        <div class="nutrient-bar"><div class="progress-wrap"><div class="progress-fill" id="pb-cals" style="background:#85B7EB;width:0%"></div></div></div>
+        <span class="nutrient-val" id="pv-cals">0 / 2000</span>
+      </div>
+      <div class="nutrient-row">
+        <span class="nutrient-name">Water</span>
+        <div class="nutrient-bar"><div class="progress-wrap"><div class="progress-fill" id="pb-water" style="background:#85B7EB;width:0%"></div></div></div>
+        <span class="nutrient-val" id="pv-water">0 / 2000ml</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">AI Nutrition Analysis</div>
+      <div class="analyze-row">
+        <button class="btn-primary"  onclick="analyzeDay()">Analyze today's diet ↗</button>
+        <button class="btn-secondary" onclick="getSuggestions()">Suggest improvements</button>
+        <button class="btn-secondary" onclick="getMealPlan()">Generate meal plan</button>
+      </div>
+      <div id="analysis-output"></div>
+    </div>
+  </div>
+
+  <!-- ════════ TAB: HEALTH STATS ════════ -->
+  <div id="tab-health" class="panel">
+    <div class="card">
+      <div class="section-title">Your Profile</div>
+      <div class="profile-grid">
+        <div class="field-group">
+          <label>Name</label>
+          <input id="p-name" placeholder="Your name" />
+        </div>
+        <div class="field-group">
+          <label>Age</label>
+          <input id="p-age" type="number" placeholder="e.g. 28" min="10" max="100" />
+        </div>
+        <div class="field-group">
+          <label>Weight (kg)</label>
+          <input id="p-weight" type="number" placeholder="e.g. 70" />
+        </div>
+        <div class="field-group">
+          <label>Height (cm)</label>
+          <input id="p-height" type="number" placeholder="e.g. 170" />
+        </div>
+        <div class="field-group">
+          <label>Gender</label>
+          <select id="p-gender">
+            <option value="">Select</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Activity level</label>
+          <select id="p-activity">
+            <option value="sedentary">Sedentary</option>
+            <option value="light">Lightly active</option>
+            <option value="moderate" selected>Moderately active</option>
+            <option value="active">Very active</option>
+          </select>
+        </div>
+        <div class="field-group full-width">
+          <label>Goal</label>
+          <select id="p-goal">
+            <option value="lose">Lose weight</option>
+            <option value="maintain" selected>Maintain weight</option>
+            <option value="gain">Gain muscle</option>
+            <option value="health">General health</option>
+          </select>
+        </div>
+        <div class="field-group full-width">
+          <label>Dietary restrictions / allergies</label>
+          <input id="p-diet" placeholder="e.g. vegetarian, lactose intolerant, nut allergy..." />
+        </div>
+        <div class="field-group full-width">
+          <label>Health conditions</label>
+          <input id="p-conditions" placeholder="e.g. diabetes, high blood pressure..." />
+        </div>
+        <div class="field-group full-width">
+          <label>Anthropic API Key (Required for Agent)</label>
+          <input id="p-apikey" type="password" placeholder="sk-ant-..." />
+        </div>
+        <div class="full-width" style="margin-top:4px;">
+          <button class="btn-primary" onclick="saveProfile()">Save &amp; Calculate ↗</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="bmi-card" style="display:none;" class="card">
+      <div class="section-title">Calculated Stats</div>
+      <div class="metrics-row" style="grid-template-columns:repeat(3,minmax(0,1fr));">
+        <div class="metric-card">
+          <div class="metric-value" id="bmi-val">—</div>
+          <div class="metric-label">BMI</div>
+          <div class="metric-sub" id="bmi-cat">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="bmr-val">—</div>
+          <div class="metric-label">BMR (kcal/day)</div>
+          <div class="metric-sub">base metabolism</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="tdee-val">—</div>
+          <div class="metric-label">Daily calorie goal</div>
+          <div class="metric-sub" id="tdee-sub">—</div>
+        </div>
+      </div>
+      <div id="health-advice-out" style="margin-top:0.75rem;"></div>
+    </div>
+  </div>
+
+  <!-- ════════ TAB: ASK AGENT ════════ -->
+  <div id="tab-chat" class="panel">
+    <div class="card">
+
+      <!-- Header -->
+      <div class="chat-panel-header">
+        <div class="chat-avatar">🥗</div>
+        <div class="chat-panel-info">
+          <div class="chat-panel-name">NutriAgent AI</div>
+          <div class="chat-panel-status">
+            <span class="chat-status-dot"></span>
+            Always available · Clinical-grade nutrition coach
+          </div>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="chat-area" id="chat-area">
+        <div class="chat-bubble chat-agent">Hi! I'm your personal NutriAgent 🥗<br>Ask me anything about your diet, nutrition, mental health, or if you need motivation. I can also <strong>analyze your full day</strong> based on everything you've logged!</div>
+      </div>
+
+      <!-- Quick chips + input -->
+      <div class="chat-bottom">
+        <div class="quick-btns">
+          <button onclick="quickAsk('What should I eat for more energy?')">⚡ More energy?</button>
+          <button onclick="quickAsk('Am I eating enough protein today?')">💪 Protein check</button>
+          <button onclick="quickAsk('Give me a healthy snack idea')">🥜 Snack idea</button>
+          <button onclick="quickAsk('Analyze what I have eaten today')">📊 Analyse today</button>
+          <button onclick="quickAsk('I feel stressed, can you motivate me?')">🌿 Motivate me</button>
+        </div>
+        <div class="chat-input-row">
+          <input id="chat-input"
+                 placeholder="Ask me about your health, diet, or wellbeing…"
+                 onkeydown="if(event.key==='Enter') sendChat()" />
+          <button class="chat-send-btn" onclick="sendChat()" title="Send">↗</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════ TAB: FACE SCAN ════════ -->
+  <div id="tab-scan" class="panel">
+    <div class="card" style="text-align: center; max-width: 600px; margin: 0 auto; background: var(--bg-primary); border-radius: var(--radius-lg); padding: 2rem;">
+      <div class="section-title" style="font-size: 24px; font-family: 'Playfair Display', serif; margin-bottom: 0.5rem;">Wellness Scan</div>
+      <p style="color:var(--text-secondary);font-size:15px;margin-bottom:2rem;">
+        Capture or upload your photo for instant wellness insights.
+      </p>
+
+      <div style="background: rgba(59,130,246,0.05); border-radius: var(--radius-md); padding: 1.25rem; text-align: left; margin-bottom: 2rem; border: 1px solid rgba(59,130,246,0.1);">
+        <div style="font-weight: 600; margin-bottom: 10px; color: var(--text-primary); font-size: 15px;">Tips for Best Results:</div>
+        <ul style="color: var(--text-secondary); margin-left: 1.5rem; line-height: 1.8; font-size: 14px;">
+          <li>Use good, natural lighting.</li>
+          <li>Face the camera directly.</li>
+          <li>Remove glasses and ensure hair doesn't cover your face.</li>
+          <li>Keep a neutral expression.</li>
+        </ul>
+      </div>
+
+      <div id="scan-actions" style="display: flex; gap: 16px; margin-bottom: 2rem; justify-content: center;">
+        <button id="btn-use-camera" onclick="initiateScan('camera')" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; background: linear-gradient(135deg, #4f46e5, #3b82f6); color: white; border: none; border-radius: 16px; box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3); cursor: pointer; transition: transform 0.2s;">
+          <span style="font-size: 28px; margin-bottom: 12px;">📷</span>
+          <span style="font-size: 16px; font-weight: 600;">Use Camera</span>
+          <span style="font-size: 12px; font-weight: 400; opacity: 0.9; margin-top: 4px;">Take a selfie</span>
+        </button>
+        
+        <button id="btn-upload-photo" onclick="document.getElementById('photo-upload').click()" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-secondary); border-radius: 16px; cursor: pointer; transition: transform 0.2s;">
+          <span style="font-size: 28px; margin-bottom: 12px;">📁</span>
+          <span style="font-size: 16px; font-weight: 600;">Upload Photo</span>
+          <span style="font-size: 12px; font-weight: 400; color: var(--text-secondary); margin-top: 4px;">Choose from gallery</span>
+        </button>
+        <input type="file" id="photo-upload" style="display: none;" accept="image/*" onchange="initiateScan('upload')">
+      </div>
+
+      <div id="scan-status" style="display: none; margin-bottom: 2rem;">
+        <div class="scanner-container" id="scanner" style="margin: 0 auto 1.5rem auto;">
+          <video id="video-feed" class="video-feed" playsinline muted></video>
+          <div id="upload-preview" style="display:none; width:100%; height:100%; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; color:var(--text-tertiary); font-size:48px;">👤</div>
+          <div class="face-outline"></div>
+          <div class="scan-line"></div>
+        </div>
+        <div id="scan-message" style="font-size: 16px; font-weight: 500; color: var(--primary);">Analyzing facial biomarkers...</div>
+      </div>
+
+      <div style="font-size: 12px; color: var(--text-tertiary); display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 1.5rem;">
+        <span>🔒</span> Your privacy is our priority. Images are processed securely and not stored permanently.
+      </div>
+
+      <div id="scan-results" class="scan-results">
+        <div class="metrics-row">
+          <div class="metric-card">
+            <div class="metric-value" id="scan-hr">—</div>
+            <div class="metric-label">Heart Rate</div>
+            <div class="metric-sub">bpm</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value" id="scan-stress">—</div>
+            <div class="metric-label">Stress Level</div>
+            <div class="metric-sub">index (0-100)</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value" id="scan-spo2">—</div>
+            <div class="metric-label">Blood Oxygen</div>
+            <div class="metric-sub">% SpO2</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value" id="scan-bp">—</div>
+            <div class="metric-label">Est. BP</div>
+            <div class="metric-sub">mmHg</div>
+          </div>
+        </div>
+        <div class="ai-response" style="text-align: left; margin-top: 1rem;">
+          <strong>AI Coach Insight:</strong> <span id="scan-insight">Run scan to view insights.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ TAB: MIND & MOOD ════════ -->
+  <div id="tab-mental" class="panel">
+    <div class="card" style="text-align: center;">
+      <div class="section-title">Mind Relax - Breathing Exercise</div>
+      <p style="color:var(--text-secondary);font-size:14px;margin-bottom:1rem;">Follow the circle to regulate your breathing and reduce stress.</p>
+      <div class="breathe-container">
+        <div class="breathe-circle" id="breathe-circle">Start</div>
+      </div>
+      <button class="btn-primary" id="breathe-btn" onclick="toggleBreathing()">Start Breathing ↗</button>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Mental Health Tracker</div>
+      <div style="font-size:14px; font-weight:500; margin-bottom:8px; color:var(--text-secondary);">How are you feeling right now?</div>
+      <div class="mood-emojis">
+        <div class="mood-emoji" onclick="selectMood(this, 'Terrible')">😫</div>
+        <div class="mood-emoji" onclick="selectMood(this, 'Bad')">🙁</div>
+        <div class="mood-emoji" onclick="selectMood(this, 'Okay')">😐</div>
+        <div class="mood-emoji" onclick="selectMood(this, 'Good')">🙂</div>
+        <div class="mood-emoji" onclick="selectMood(this, 'Excellent')">🤩</div>
+      </div>
+      
+      <div style="font-size:14px; font-weight:500; margin-bottom:8px; color:var(--text-secondary);">Current Stress Level (0 - 10)</div>
+      <div class="steps-row" style="margin-bottom: 1.5rem;">
+        <input type="range" min="0" max="10" value="5" id="stress-slider" oninput="document.getElementById('stress-val').textContent=this.value" />
+        <span id="stress-val" style="font-size:20px;font-weight:500;min-width:30px;text-align:right;">5</span>
+      </div>
+
+      <button class="btn-primary" style="width: 100%; margin-bottom: 1rem;" onclick="logMentalHealth()">Log Mood &amp; Stress ↗</button>
+      <div id="mental-log-list"><div class="empty-state">No entries yet today.</div></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Mental Health Analyzer</div>
+      <p style="color:var(--text-secondary);font-size:14px;margin-bottom:1rem;">Get AI-powered insights based on your recent mood and stress logs.</p>
+      <button class="btn-secondary" style="width: 100%; margin-bottom: 1rem;" onclick="analyzeMentalHealth()">Analyze My Wellbeing ↗</button>
+      <div id="mental-analysis-output"></div>
+    </div>
+  </div>
+
+  <!-- ════════ AMBULANCE CONTACTS MODAL ════════ -->
+  <div class="amb-modal-overlay" id="amb-modal-overlay" onclick="if(event.target===this)closeAmbModal()">
+    <div class="amb-modal">
+      <div class="amb-modal-header">
+        <h2>🚑 Ambulance Contacts by Area</h2>
+        <button class="amb-modal-close" onclick="closeAmbModal()">✕</button>
+      </div>
+      <div class="amb-modal-search">
+        <input type="text" id="amb-search" placeholder="Search by state or city…" oninput="filterAmb(this.value)" />
+      </div>
+      <div class="amb-list" id="amb-list"></div>
+    </div>
+  </div>
+
+  <!-- ════════ TAB: EMERGENCY SOS ════════ -->
+  <div id="tab-emergency" class="panel">
+    <div class="card" style="border: 2px solid rgba(239, 68, 68, 0.4); background: var(--bg-danger);">
+      <div class="section-title" style="color: var(--text-danger); display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 24px;">🚨</span> Emergency Assistance
+      </div>
+      <p style="color:var(--text-secondary);font-size:15px;margin-bottom:1.5rem;">
+        If you or someone else is in immediate danger or requires urgent medical attention, use the resources below immediately.
+      </p>
+      
+      <div style="display: flex; gap: 16px; margin-bottom: 2rem; flex-wrap: wrap;">
+        <!-- Quick universal dial -->
+        <a href="tel:112" style="flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem 1.5rem; background: #ef4444; color: white; border: none; border-radius: 16px; box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3); cursor: pointer; text-decoration: none; transition: transform 0.2s;">
+          <span style="font-size: 30px; margin-bottom: 6px;">🚑</span>
+          <span style="font-size: 17px; font-weight: 700;">Call 112</span>
+          <span style="font-size: 12px; opacity: 0.9; margin-top: 2px;">Universal Emergency</span>
+        </a>
+        <!-- Area-specific contacts -->
+        <button onclick="openAmbModal()" style="flex: 1; min-width: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem 1.5rem; background: linear-gradient(135deg,#b91c1c,#ef4444); color: white; border: none; border-radius: 16px; box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25); cursor: pointer; font-family: inherit; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+          <span style="font-size: 30px; margin-bottom: 6px;">📋</span>
+          <span style="font-size: 17px; font-weight: 700;">Area-wise Contacts</span>
+          <span style="font-size: 12px; opacity: 0.9; margin-top: 2px;">Find your local ambulance no.</span>
+        </button>
+      </div>
+
+      <div style="background: var(--bg-primary); border-radius: var(--radius-md); padding: 1.25rem; border: 1px solid rgba(239, 68, 68, 0.2);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+          <div style="font-weight: 600; color: var(--text-primary); font-size: 16px;">📍 Current Location</div>
+          <button class="btn-secondary" onclick="detectLocation()" style="padding: 6px 12px; font-size: 12px;" id="btn-location">Detect Location</button>
+        </div>
+        <div id="location-display" style="color: var(--text-secondary); font-size: 14px; background: var(--bg-secondary); padding: 10px; border-radius: 8px; line-height: 1.5;">
+          Location not detected yet. Click "Detect Location" to find your coordinates for emergency services.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">First Aid Quick Guide</div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="border: 1px solid var(--border-secondary); border-radius: var(--radius-md); padding: 12px;">
+          <div style="font-weight: 600; font-size: 15px; margin-bottom: 6px; color: var(--text-primary);">🫀 CPR (Cardiopulmonary Resuscitation)</div>
+          <p style="font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+            1. Push hard and fast in the center of the chest (100-120 pushes a minute).<br>
+            2. Give 2 rescue breaths after every 30 pushes if trained.<br>
+            3. Continue until medical help arrives or the person starts breathing.
+          </p>
+        </div>
+        <div style="border: 1px solid var(--border-secondary); border-radius: var(--radius-md); padding: 12px;">
+          <div style="font-weight: 600; font-size: 15px; margin-bottom: 6px; color: var(--text-primary);">🩸 Severe Bleeding</div>
+          <p style="font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+            1. Apply direct pressure to the wound using a clean cloth.<br>
+            2. Maintain continuous pressure for at least 5 minutes.<br>
+            3. Do not remove the cloth; add more on top if blood soaks through.
+          </p>
+        </div>
+        <div style="border: 1px solid var(--border-secondary); border-radius: var(--radius-md); padding: 12px;">
+          <div style="font-weight: 600; font-size: 15px; margin-bottom: 6px; color: var(--text-primary);">🗣️ Choking</div>
+          <p style="font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+            1. Stand behind the person and wrap your arms around their waist.<br>
+            2. Make a fist and place it just above their navel.<br>
+            3. Perform quick, upward thrusts (Heimlich maneuver) until the object is expelled.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div><!-- .panel tab-emergency -->
+
+    </div><!-- .content-area -->
+  </div><!-- .main-layout -->
+
+</div><!-- #app -->
+
+<script>
+  function logout() {
+    fetch('/logout', { method: 'POST' }).then(() => {
+      sessionStorage.removeItem('isLoggedIn');
+      window.location.href = 'index.html';
+    });
+  }
+
+  // ─── Live Clock ────────────────────────────────────────────────
+  function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    const el = document.getElementById('live-clock');
+    if (el) el.textContent = `${h}:${m}:${s}`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ─── State ───────────────────────────────────────────────────
+  const state = {
+    meals: [],
+    water: 0,
+    steps: 0,
+    profile: {},
+    calorieGoal: 2000,
+    chatHistory: [],
+    mentalLogs: [],
+    currentMood: null
+  };
+
+  // ─── Tabs ─────────────────────────────────────────────────────
+  function switchTab(name) {
+    const names = ['log', 'analysis', 'health', 'chat', 'scan', 'mental', 'emergency'];
+    // deactivate all tab buttons and panels
+    names.forEach(n => {
+      const btn = document.getElementById('tab-btn-' + n);
+      if (btn) btn.classList.toggle('active', n === name);
+    });
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    if (name === 'analysis') updateAnalysisPanel();
+    
+    // Stop camera if leaving scan tab
+    if (name !== 'scan' && videoStream) {
+       videoStream.getTracks().forEach(track => track.stop());
+       videoStream = null;
+    }
+  }
+
+  // ─── Face Scan Camera Logic ────────────────────────────────────
+  let videoStream = null;
+
+  async function startCamera() {
+    const video = document.getElementById('video-feed');
+    document.getElementById('upload-preview').style.display = 'none';
+    video.style.display = 'block';
+    try {
+      if (!videoStream && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        video.srcObject = videoStream;
+        video.play();
+      }
+    } catch (err) {
+      console.error("Camera access denied or unavailable", err);
+      // Fallback UI if no camera
+      video.style.backgroundColor = '#1e293b';
+      video.outerHTML = `<div class="video-feed" style="background:#1e293b; display:flex; align-items:center; justify-content:center; color:#94a3b8;"><p style="margin-top:50%;">Camera Unavailable</p></div>`;
+    }
+  }
+
+  function initiateScan(mode) {
+    const actions = document.getElementById('scan-actions');
+    const status = document.getElementById('scan-status');
+    const scanner = document.getElementById('scanner');
+    const results = document.getElementById('scan-results');
+    const msg = document.getElementById('scan-message');
+    
+    actions.style.display = 'none';
+    status.style.display = 'block';
+    results.classList.remove('active');
+    scanner.classList.add('scanning');
+    
+    if (mode === 'camera') {
+      startCamera();
+      msg.textContent = 'Analyzing facial biomarkers...';
+    } else {
+      document.getElementById('video-feed').style.display = 'none';
+      document.getElementById('upload-preview').style.display = 'flex';
+      msg.textContent = 'Processing uploaded image...';
+    }
+
+    // Simulate 3.5 seconds scan delay
+    setTimeout(() => {
+      scanner.classList.remove('scanning');
+      msg.textContent = 'Analysis Complete';
+      
+      // Stop camera after scan to save resources
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
+      }
+      
+      // Generate mock health data based on typical normal bounds
+      document.getElementById('scan-hr').textContent = Math.floor(Math.random() * (85 - 65 + 1)) + 65;
+      const stress = Math.floor(Math.random() * (45 - 20 + 1)) + 20;
+      document.getElementById('scan-stress').textContent = stress;
+      document.getElementById('scan-spo2').textContent = Math.floor(Math.random() * (100 - 97 + 1)) + 97;
+      document.getElementById('scan-bp').textContent = "118/7" + Math.floor(Math.random() * 9);
+      
+      let insight = "";
+      if (stress > 35) insight = "Your stress levels are slightly elevated. Consider a 5-minute breathing exercise and ensure you're well-hydrated today.";
+      else insight = "Your vital signs look excellent. You appear relaxed and well-rested. Keep up your current healthy routine!";
+      document.getElementById('scan-insight').textContent = insight;
+      
+      results.classList.add('active');
+      
+      // Allow user to reset and scan again after 5 seconds
+      setTimeout(() => {
+         actions.style.display = 'flex';
+         status.style.display = 'none';
+      }, 5000);
+      
+    }, 3500);
+  }
+
+  // ─── Water glasses ────────────────────────────────────────────
+  const waterEl = document.getElementById('water-glasses');
+  for (let i = 0; i < 8; i++) {
+    const g = document.createElement('button');
+    g.className = 'water-glass';
+    g.textContent = '🥛';
+    g.dataset.idx = i;
+    g.onclick = () => toggleWater(i);
+    waterEl.appendChild(g);
+  }
+
+  function toggleWater(idx) {
+    state.water = idx < state.water ? idx : idx + 1;
+    document.querySelectorAll('.water-glass').forEach((g, i) => g.classList.toggle('filled', i < state.water));
+    document.getElementById('water-label').textContent = state.water + ' / 8 glasses today';
+    updateMacroBars();
+  }
+
+  // ─── Steps ───────────────────────────────────────────────────
+  function updateSteps(v) {
+    state.steps = parseInt(v);
+    document.getElementById('steps-val').textContent = parseInt(v).toLocaleString();
+  }
+
+  // ─── Local Nutrition Estimator ──────────────────────────────
+  function estimateNutritionLocally(text) {
+    const t = text.toLowerCase();
+    let cal = 0, pro = 0, car = 0, fat = 0;
+    let found = false;
+    
+    const db = {
+      // Proteins
+      egg: { c: 78, p: 6, cb: 1, f: 5 },
+      eggs: { c: 156, p: 12, cb: 2, f: 10 },
+      chicken: { c: 165, p: 31, cb: 0, f: 4 },
+      'chicken breast': { c: 165, p: 31, cb: 0, f: 4 },
+      beef: { c: 250, p: 26, cb: 0, f: 15 },
+      steak: { c: 271, p: 26, cb: 0, f: 18 },
+      pork: { c: 242, p: 27, cb: 0, f: 14 },
+      fish: { c: 136, p: 22, cb: 0, f: 5 },
+      salmon: { c: 208, p: 20, cb: 0, f: 13 },
+      tuna: { c: 132, p: 28, cb: 0, f: 1 },
+      shrimp: { c: 99, p: 24, cb: 0, f: 1 },
+      tofu: { c: 76, p: 8, cb: 2, f: 4 },
+      // Dairy
+      milk: { c: 103, p: 8, cb: 12, f: 2 },
+      cheese: { c: 113, p: 7, cb: 0, f: 9 },
+      yogurt: { c: 100, p: 10, cb: 11, f: 0 },
+      butter: { c: 102, p: 0, cb: 0, f: 12 },
+      paneer: { c: 265, p: 18, cb: 4, f: 20 },
+      // Grains & Carbs
+      rice: { c: 205, p: 4, cb: 45, f: 0 },
+      pasta: { c: 220, p: 8, cb: 43, f: 1 },
+      bread: { c: 79, p: 3, cb: 15, f: 1 },
+      toast: { c: 75, p: 3, cb: 13, f: 1 },
+      oats: { c: 150, p: 5, cb: 27, f: 3 },
+      oatmeal: { c: 150, p: 5, cb: 27, f: 3 },
+      roti: { c: 120, p: 3, cb: 18, f: 4 },
+      chapati: { c: 120, p: 3, cb: 18, f: 4 },
+      naan: { c: 262, p: 9, cb: 45, f: 5 },
+      paratha: { c: 200, p: 4, cb: 28, f: 8 },
+      idli: { c: 58, p: 2, cb: 12, f: 0 },
+      dosa: { c: 133, p: 4, cb: 20, f: 4 },
+      upma: { c: 170, p: 5, cb: 28, f: 5 },
+      poha: { c: 180, p: 4, cb: 33, f: 4 },
+      // Vegetables
+      salad: { c: 100, p: 2, cb: 10, f: 5 },
+      spinach: { c: 23, p: 3, cb: 4, f: 0 },
+      broccoli: { c: 55, p: 4, cb: 11, f: 1 },
+      carrot: { c: 52, p: 1, cb: 12, f: 0 },
+      tomato: { c: 35, p: 2, cb: 8, f: 0 },
+      onion: { c: 44, p: 1, cb: 10, f: 0 },
+      potato: { c: 161, p: 4, cb: 37, f: 0 },
+      'sweet potato': { c: 130, p: 2, cb: 30, f: 0 },
+      cucumber: { c: 16, p: 1, cb: 4, f: 0 },
+      // Fruits
+      apple: { c: 95, p: 0, cb: 25, f: 0 },
+      banana: { c: 105, p: 1, cb: 27, f: 0 },
+      orange: { c: 62, p: 1, cb: 15, f: 0 },
+      mango: { c: 202, p: 3, cb: 50, f: 1 },
+      grapes: { c: 104, p: 1, cb: 27, f: 0 },
+      strawberry: { c: 49, p: 1, cb: 12, f: 0 },
+      // Legumes
+      dal: { c: 230, p: 15, cb: 39, f: 1 },
+      lentils: { c: 230, p: 18, cb: 40, f: 1 },
+      beans: { c: 127, p: 9, cb: 23, f: 1 },
+      chickpeas: { c: 269, p: 15, cb: 45, f: 4 },
+      // Snacks & Fast Food
+      burger: { c: 354, p: 17, cb: 29, f: 17 },
+      pizza: { c: 285, p: 12, cb: 36, f: 10 },
+      fries: { c: 312, p: 3, cb: 41, f: 15 },
+      samosa: { c: 262, p: 5, cb: 30, f: 14 },
+      'pakora': { c: 178, p: 5, cb: 22, f: 8 },
+      chips: { c: 152, p: 2, cb: 15, f: 10 },
+      nuts: { c: 175, p: 5, cb: 6, f: 16 },
+      almonds: { c: 164, p: 6, cb: 6, f: 14 },
+      // Indian Dishes
+      'chicken curry': { c: 290, p: 28, cb: 8, f: 16 },
+      'biryani': { c: 450, p: 22, cb: 60, f: 14 },
+      'rajma': { c: 267, p: 15, cb: 45, f: 3 },
+      'chole': { c: 289, p: 14, cb: 45, f: 6 },
+      'palak paneer': { c: 320, p: 16, cb: 12, f: 24 },
+      'butter chicken': { c: 340, p: 28, cb: 12, f: 20 },
+      'aloo gobi': { c: 188, p: 5, cb: 30, f: 6 },
+      // Beverages
+      juice: { c: 112, p: 1, cb: 26, f: 0 },
+      milk: { c: 103, p: 8, cb: 12, f: 2 },
+      water: { c: 0, p: 0, cb: 0, f: 0 },
+      coffee: { c: 5, p: 0, cb: 0, f: 0 },
+      tea: { c: 2, p: 0, cb: 0, f: 0 },
+      'protein shake': { c: 150, p: 25, cb: 7, f: 2 }
+    };
+    
+    // Process words to find matches
+    for (let key in db) {
+      // Basic word boundary match to avoid partial matches like "pork" in "spork"
+      const regex = new RegExp('\\b' + key + '\\b');
+      if (regex.test(t)) {
+        cal += db[key].c;
+        pro += db[key].p;
+        car += db[key].cb;
+        fat += db[key].f;
+        found = true;
+      }
+    }
+    
+    // If no specific foods matched, provide a generic fallback but more randomized/realistic
+    if (!found) {
+      return { calories: 350, protein: 20, carbs: 40, fat: 12, summary: text };
+    }
+    
+    return { calories: cal, protein: pro, carbs: car, fat: fat, summary: text };
+  }
+
+  // ─── Log meal (calls Claude API for nutrition estimate) ───────
+  async function logMeal() {
+    const input = document.getElementById('meal-input');
+    const type  = document.getElementById('meal-type').value;
+    const text  = input.value.trim();
+    if (!text) return;
+
+    const btn = document.getElementById('log-btn');
+    btn.disabled = true;
+    btn.textContent = 'Analyzing...';
+
+    try {
+      const apiKey = sessionStorage.getItem('anthropic_api_key') || document.getElementById('p-apikey')?.value.trim();
+      if (!apiKey) {
+        await new Promise(r => setTimeout(r, 800));
+        const estimatedNutrition = estimateNutritionLocally(text);
+        state.meals.push({ type, text, nutrition: estimatedNutrition, time: now() });
+        input.value = '';
+        btn.disabled = false;
+        btn.textContent = 'Log ↗';
+        renderMeals();
+        updateAnalysisPanel();
+        return;
+      }
+      const profileCtx = state.profile.weight ? `User profile: ${JSON.stringify(state.profile)}.` : '';
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: `You are a nutrition expert. When given a meal description, return ONLY valid JSON like:
+{"calories":350,"protein":20,"carbs":45,"fat":12,"summary":"2 eggs with toast and OJ"}
+Be realistic with estimates. No markdown, no explanation, no preamble — just raw JSON.`,
+          messages: [{ role: 'user', content: `${profileCtx} Estimate nutrition for: ${text}` }]
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || `HTTP error ${res.status}`);
+      let nutrition = estimateNutritionLocally(text); // Fallback
+      try {
+        const txt   = data.content.map(c => c.text || '').join('');
+        const clean = txt.replace(/```json|```/g, '').trim();
+        nutrition   = JSON.parse(clean);
+      } catch (_) {}
+
+      state.meals.push({ type, text, nutrition, time: now() });
+    } catch (e) {
+      console.error(e);
+      // Fallback if API call fails
+      const estimatedNutrition = estimateNutritionLocally(text);
+      state.meals.push({ type, text, nutrition: estimatedNutrition, time: now() });
+      alert("Meal logged with estimated default nutrition. Agent error: " + e.message);
+    }
+
+    input.value = '';
+    btn.disabled = false;
+    btn.textContent = 'Log ↗';
+    renderMeals();
+    updateAnalysisPanel();
+  }
+
+  function now() {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // ─── Render meal list ─────────────────────────────────────────
+  function renderMeals() {
+    const el = document.getElementById('meals-list');
+    if (!state.meals.length) {
+      el.innerHTML = '<div class="empty-state">No meals logged yet today.</div>';
+      return;
+    }
+    el.innerHTML = state.meals.map((m, i) => `
+      <div class="meal-entry">
+        <span class="meal-type-badge badge-${m.type}">${m.type}</span>
+        <div style="flex:1">
+          <div class="meal-text">${m.nutrition.summary || m.text}</div>
+          <div class="meal-time">${m.time}</div>
+        </div>
+        <span class="meal-cals">${Math.round(m.nutrition.calories)} kcal</span>
+        <button class="delete-btn" onclick="deleteMeal(${i})">×</button>
+      </div>
+    `).join('');
+  }
+
+  function deleteMeal(i) {
+    state.meals.splice(i, 1);
+    renderMeals();
+    updateAnalysisPanel();
+  }
+
+  // ─── Totals ───────────────────────────────────────────────────
+  function getTotals() {
+    return state.meals.reduce((acc, m) => ({
+      calories: acc.calories + (m.nutrition.calories || 0),
+      protein:  acc.protein  + (m.nutrition.protein  || 0),
+      carbs:    acc.carbs    + (m.nutrition.carbs     || 0),
+      fat:      acc.fat      + (m.nutrition.fat       || 0)
+    }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+  }
+
+  // ─── Update analysis panel ────────────────────────────────────
+  function updateAnalysisPanel() {
+    const t    = getTotals();
+    const goal = state.calorieGoal || 2000;
+    document.getElementById('total-cals').textContent  = Math.round(t.calories);
+    document.getElementById('protein-val').textContent = Math.round(t.protein)  + 'g';
+    document.getElementById('carbs-val').textContent   = Math.round(t.carbs)    + 'g';
+    document.getElementById('fat-val').textContent     = Math.round(t.fat)      + 'g';
+    document.getElementById('cal-goal-sub').textContent = 'goal: ' + goal + ' kcal';
+    updateMacroBars();
+  }
+
+  function updateMacroBars() {
+    const t    = getTotals();
+    const goal = state.calorieGoal || 2000;
+    const pg   = state.profile.gender === 'female' ? 100 : 120;
+    const cg   = Math.round(goal * 0.5 / 4);
+    const fg   = Math.round(goal * 0.25 / 9);
+    const wg   = 2000;
+
+    setBar('protein', t.protein,       pg,   t.protein,       'g');
+    setBar('carbs',   t.carbs,         cg,   t.carbs,         'g');
+    setBar('fat',     t.fat,           fg,   t.fat,           'g');
+    setBar('cals',    t.calories,      goal, t.calories,      '');
+    setBar('water',   state.water*250, wg,   state.water*250, 'ml');
+  }
+
+  function setBar(id, val, max, display, unit) {
+    const pct = Math.min(100, Math.round(val / max * 100));
+    document.getElementById('pb-' + id).style.width = pct + '%';
+    document.getElementById('pv-' + id).textContent = Math.round(display) + unit + ' / ' + max + (id === 'cals' ? '' : unit);
+  }
+
+  // ─── Build rich health context ────────────────────────────────
+  function buildContext() {
+    const t = getTotals();
+    const p = state.profile;
+    const goal = state.calorieGoal || 2000;
+    const deficit = goal - Math.round(t.calories);
+    const proteinGoal = p.gender === 'female' ? 100 : 130;
+    const fatGoal = Math.round(goal * 0.25 / 9);
+    const carbGoal = Math.round(goal * 0.45 / 4);
+
+    const mealLog = state.meals.length
+      ? state.meals.map(m =>
+          `  • [${m.type.toUpperCase()}] ${m.nutrition.summary || m.text}: ${Math.round(m.nutrition.calories)} kcal | P:${Math.round(m.nutrition.protein)}g C:${Math.round(m.nutrition.carbs)}g F:${Math.round(m.nutrition.fat)}g`
+        ).join('\n')
+      : '  No meals logged yet.';
+
+    const bmi = p.weight && p.height
+      ? +(p.weight / ((p.height / 100) ** 2)).toFixed(1)
+      : null;
+    const bmiCat = bmi
+      ? (bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal weight' : bmi < 30 ? 'Overweight' : 'Obese')
+      : 'Unknown';
+
+    const bmr = (p.weight && p.height && p.age)
+      ? Math.round(p.gender === 'female'
+          ? (10 * p.weight) + (6.25 * p.height) - (5 * p.age) - 161
+          : (10 * p.weight) + (6.25 * p.height) - (5 * p.age) + 5)
+      : null;
+
+    const mentalStr = state.mentalLogs.length
+      ? state.mentalLogs.map(l => `Mood: ${l.mood}, Stress: ${l.stress}/10`).join('; ')
+      : 'None recorded';
+
+    return `=== USER PROFILE ===
+Name: ${p.name || 'User'} | Age: ${p.age || '?'} | Gender: ${p.gender || '?'}
+Weight: ${p.weight || '?'} kg | Height: ${p.height || '?'} cm
+BMI: ${bmi || '?'} (${bmiCat}) | BMR: ${bmr || '?'} kcal/day
+Activity Level: ${p.activity || '?'} | Goal: ${p.goal || '?'}
+Diet Preference: ${p.diet || 'none'} | Health Conditions: ${p.conditions || 'none'}
+
+=== TODAY'S METRICS ===
+Calorie Goal (TDEE): ${goal} kcal
+Calories Consumed: ${Math.round(t.calories)} kcal
+Calorie ${deficit >= 0 ? 'Deficit' : 'Surplus'}: ${Math.abs(deficit)} kcal
+Protein: ${Math.round(t.protein)}g / ${proteinGoal}g goal (${Math.round(t.protein/proteinGoal*100)}%)
+Carbs: ${Math.round(t.carbs)}g / ${carbGoal}g goal (${Math.round(t.carbs/carbGoal*100)}%)
+Fat: ${Math.round(t.fat)}g / ${fatGoal}g goal (${Math.round(t.fat/fatGoal*100)}%)
+Hydration: ${state.water} / 8 glasses (${Math.round(state.water/8*100)}%)
+Steps Today: ${state.steps.toLocaleString()} / 10,000
+
+=== MEAL LOG ===
+${mealLog}
+
+=== MENTAL WELLNESS ===
+${mentalStr}`;
+  }
+
+  // ─── AI agent helper ─────────────────────────────────────────
+  async function callAgent(prompt, outEl) {
+    outEl.innerHTML = '<div class="ai-thinking"><div class="dot-pulse"><span></span><span></span><span></span></div> Analysing your data…</div>';
+
+    const context = buildContext();
+
+    try {
+      const apiKey = sessionStorage.getItem('anthropic_api_key') || document.getElementById('p-apikey')?.value.trim();
+      if (!apiKey) {
+        await new Promise(r => setTimeout(r, 1200));
+        const t = getTotals();
+        const goal = state.calorieGoal || 2000;
+        const deficit = goal - Math.round(t.calories);
+        let mockTxt = `Based on your data:\n• Calories consumed: ${Math.round(t.calories)} kcal (${deficit >= 0 ? deficit + ' kcal remaining' : Math.abs(deficit) + ' kcal over goal'})\n• Protein: ${Math.round(t.protein)}g | Carbs: ${Math.round(t.carbs)}g | Fat: ${Math.round(t.fat)}g\n• Hydration: ${state.water}/8 glasses\n\nFor best results, save your Anthropic API key in Health Stats to get personalised AI analysis.`;
+        if (prompt.includes('plan')) mockTxt = `Suggested meal plan for tomorrow:\n• Breakfast: 2 eggs + oatmeal + fruit (≈400 kcal)\n• Lunch: Grilled chicken + rice + salad (≈550 kcal)\n• Snack: Almonds + Greek yogurt (≈250 kcal)\n• Dinner: Salmon + sweet potato + broccoli (≈500 kcal)\n\nTotal ≈ 1700 kcal. Add API key for a plan tailored to your exact profile.`;
+        outEl.innerHTML = `<div class="ai-response">${mockTxt.replace(/\n/g,'<br>')}</div>`;
+        return;
+      }
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1200,
+          system: `You are NutriAgent, a clinical-grade AI nutrition and health coach with expertise in dietetics, sports nutrition, and preventive medicine.
+
+Use ONLY the user's exact data provided in the context — do not guess or use generic advice. Reference specific numbers (calories consumed, macro gaps, hydration %, BMI) in your response.
+
+Guidelines:
+- Cite their actual logged meals when making recommendations
+- Calculate and mention specific nutrient deficits or surpluses
+- Tailor advice to their stated goal (lose/gain/maintain) and health conditions
+- Use bullet points for clarity; avoid markdown # headers
+- If data is missing, note what they should fill in for better analysis
+- Keep response focused and under 300 words`,
+          messages: [{ role: 'user', content: `${context}\n\n${prompt}` }]
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || `HTTP error ${res.status}`);
+      const txt = data.content.map(c => c.text || '').join('');
+      outEl.innerHTML = `<div class="ai-response">${txt.replace(/\n/g,'<br>')}</div>`;
+      return txt;
+    } catch (e) {
+      outEl.innerHTML = `<div class="ai-response" style="color:var(--text-danger)">Error: ${e.message}</div>`;
+    }
+  }
+
+  // ─── Analysis buttons ─────────────────────────────────────────
+  function analyzeDay() {
+    callAgent('Analyze my diet for today. Comment on balance, missing nutrients, and overall healthiness.', document.getElementById('analysis-output'));
+  }
+  function getSuggestions() {
+    callAgent("Based on what I've eaten today, suggest specific improvements — foods to add, swap, or avoid. Be practical.", document.getElementById('analysis-output'));
+  }
+  function getMealPlan() {
+    callAgent('Generate a balanced meal plan for tomorrow based on my profile and goals. Include breakfast, lunch, dinner, and a snack with approximate calories.', document.getElementById('analysis-output'));
+  }
+
+  // ─── Profile save & BMR/TDEE calc ────────────────────────────
+  function saveProfile() {
+    state.profile = {
+      name:       document.getElementById('p-name').value,
+      age:        +document.getElementById('p-age').value      || 25,
+      weight:     +document.getElementById('p-weight').value   || 70,
+      height:     +document.getElementById('p-height').value   || 170,
+      gender:     document.getElementById('p-gender').value    || 'other',
+      activity:   document.getElementById('p-activity').value,
+      goal:       document.getElementById('p-goal').value,
+      diet:       document.getElementById('p-diet').value,
+      conditions: document.getElementById('p-conditions').value
+    };
+
+    const apiKey = document.getElementById('p-apikey').value.trim();
+    if (apiKey) sessionStorage.setItem('anthropic_api_key', apiKey);
+
+    const { weight, height, age, gender, activity, goal } = state.profile;
+    // Mifflin–St Jeor formula
+    const bmr = gender === 'female'
+      ? (10 * weight) + (6.25 * height) - (5 * age) - 161
+      : (10 * weight) + (6.25 * height) - (5 * age) + 5;
+    const actMult = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725 }[activity] || 1.55;
+    let tdee = Math.round(bmr * actMult);
+    if (goal === 'lose') tdee -= 400;
+    if (goal === 'gain') tdee += 300;
+    state.calorieGoal = tdee;
+
+    const bmi    = +(weight / ((height / 100) ** 2)).toFixed(1);
+    const bmiCat = bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal weight' : bmi < 30 ? 'Overweight' : 'Obese';
+    document.getElementById('bmi-val').textContent  = bmi;
+    document.getElementById('bmi-cat').textContent  = bmiCat;
+    document.getElementById('bmr-val').textContent  = Math.round(bmr);
+    document.getElementById('tdee-val').textContent = tdee;
+    document.getElementById('tdee-sub').textContent = goal === 'lose' ? 'for fat loss' : goal === 'gain' ? 'for muscle gain' : 'to maintain weight';
+    document.getElementById('bmi-card').style.display = 'block';
+
+    callAgent('Based on my profile, give me 3 personalized health tips and my ideal macro targets. Be specific.', document.getElementById('health-advice-out'));
+    updateAnalysisPanel();
+  }
+
+  // ─── Chat ─────────────────────────────────────────────────────
+  async function sendChat() {
+    const input = document.getElementById('chat-input');
+    const text  = input.value.trim();
+    if (!text) return;
+    input.value = '';
+
+    const area = document.getElementById('chat-area');
+    const userBubble = document.createElement('div');
+    userBubble.className = 'chat-bubble chat-user';
+    userBubble.textContent = text;
+    area.appendChild(userBubble);
+
+    const agentBubble = document.createElement('div');
+    agentBubble.className = 'chat-bubble chat-agent';
+    agentBubble.innerHTML = '<div class="dot-pulse"><span></span><span></span><span></span></div>';
+    area.appendChild(agentBubble);
+    area.scrollTop = area.scrollHeight;
+
+    state.chatHistory.push({ role: 'user', content: text });
+
+    const context = buildContext();
+    const history = state.chatHistory.slice(-6, -1).map(m => m.role + ': ' + m.content).join('\n');
+
+    try {
+      const apiKey = sessionStorage.getItem('anthropic_api_key') || document.getElementById('p-apikey')?.value.trim();
+      if (!apiKey) {
+        await new Promise(r => setTimeout(r, 900));
+        const t = getTotals();
+        const lowerQ = text.toLowerCase();
+        let mockReply = `Based on your logged ${Math.round(t.calories)} kcal and ${Math.round(t.protein)}g protein today — you're ${t.calories < (state.calorieGoal||2000) ? 'in a calorie deficit, which supports fat loss' : 'at or above your calorie goal'}. Add your API key in Health Stats for precise personalised advice.`;
+        if (lowerQ.includes('snack')) mockReply = `Given you've had ${Math.round(t.calories)} kcal today, a smart snack would be Greek yogurt (≈100 kcal, 10g protein) or a handful of almonds (≈164 kcal, 6g protein) — both help hit your protein target.`;
+        else if (lowerQ.includes('protein')) mockReply = `You've consumed ${Math.round(t.protein)}g protein so far. ${t.protein < 100 ? `You need ~${100 - Math.round(t.protein)}g more today. Try adding chicken, lentils, eggs, or paneer.` : 'Great job — you are meeting your protein target!'}`;
+        else if (lowerQ.includes('energy')) mockReply = `You have ${state.steps.toLocaleString()} steps and ${state.water} glasses of water today. Low energy often comes from dehydration or low carbs — try complex carbs like oats or sweet potato.`;
+        else if (lowerQ.includes('motivate') || lowerQ.includes('stress')) mockReply = `You're doing great — ${Math.round(t.calories)} kcal logged, ${state.water} glasses of water, ${state.steps.toLocaleString()} steps. Small consistent steps build lasting health. Keep going!`;
+        else if (lowerQ.includes('analyze') || lowerQ.includes('analyse')) mockReply = `Today's snapshot:\n• ${Math.round(t.calories)} kcal consumed\n• Protein: ${Math.round(t.protein)}g | Carbs: ${Math.round(t.carbs)}g | Fat: ${Math.round(t.fat)}g\n• Water: ${state.water}/8 glasses | Steps: ${state.steps.toLocaleString()}\nAdd API key for deep AI analysis.`;
+        agentBubble.innerHTML = mockReply.replace(/\n/g,'<br>');
+        state.chatHistory.push({ role: 'assistant', content: mockReply });
+        area.scrollTop = area.scrollHeight;
+        return;
+      }
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 800,
+          system: `You are NutriAgent, a clinical-grade AI nutrition and health coach. You have access to the user's complete health profile, today's meal log, macronutrient breakdown, hydration, steps, BMI, BMR, and mental wellness data.
+
+Rules:
+- Always reference the user's ACTUAL data — cite specific numbers, not generic advice
+- Name the specific meals they have logged when relevant
+- Calculate macro gaps/surpluses from their exact numbers
+- Be conversational but precise — like a knowledgeable friend who is also a dietitian
+- Avoid generic platitudes; every answer must be data-driven
+- Use line breaks for readability; no markdown # headers
+- Keep answers under 200 words`,
+          messages: [{
+            role: 'user',
+            content: `${context}\n\nRecent conversation:\n${history}\n\nUser: ${text}`
+          }]
+        })
+      });
+      const data  = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || `HTTP error ${res.status}`);
+      const reply = data.content.map(c => c.text || '').join('');
+      agentBubble.innerHTML = reply.replace(/\n/g,'<br>');
+      state.chatHistory.push({ role: 'assistant', content: reply });
+    } catch (e) {
+      agentBubble.textContent = 'Error: ' + e.message;
+    }
+    area.scrollTop = area.scrollHeight;
+  }
+
+  function quickAsk(q) {
+    document.getElementById('chat-input').value = q;
+    sendChat();
+  }
+
+  // ─── Mental Health & Breathing ─────────────────────────────────
+  let breathingInterval;
+  let isBreathing = false;
+
+  function toggleBreathing() {
+    const btn = document.getElementById('breathe-btn');
+    const circle = document.getElementById('breathe-circle');
+    
+    if (isBreathing) {
+      clearInterval(breathingInterval);
+      circle.classList.remove('inhale');
+      circle.textContent = 'Start';
+      btn.textContent = 'Start Breathing ↗';
+      isBreathing = false;
+      return;
+    }
+    
+    isBreathing = true;
+    btn.textContent = 'Stop Exercise';
+    
+    circle.classList.add('inhale');
+    circle.textContent = 'Breathe In';
+    
+    breathingInterval = setInterval(() => {
+      if (circle.classList.contains('inhale')) {
+        circle.textContent = 'Hold...';
+        setTimeout(() => {
+          if(!isBreathing) return;
+          circle.classList.remove('inhale');
+          circle.textContent = 'Breathe Out';
+        }, 1000);
+      } else {
+        circle.classList.add('inhale');
+        circle.textContent = 'Breathe In';
+      }
+    }, 4000);
+  }
+
+  function selectMood(el, mood) {
+    document.querySelectorAll('.mood-emoji').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    state.currentMood = mood;
+  }
+
+  function logMentalHealth() {
+    if (!state.currentMood) {
+      alert("Please select a mood first!");
+      return;
+    }
+    const stress = document.getElementById('stress-slider').value;
+    state.mentalLogs.push({ mood: state.currentMood, stress: stress, time: now() });
+    
+    const listEl = document.getElementById('mental-log-list');
+    listEl.innerHTML = state.mentalLogs.map(l => `
+      <div class="meal-entry" style="padding: 12px 0;">
+        <div style="flex:1">
+          <div class="meal-text">Mood: <strong>${l.mood}</strong> <span style="color:var(--text-tertiary);margin:0 6px;">|</span> Stress: <strong>${l.stress}/10</strong></div>
+        </div>
+        <div class="meal-time">${l.time}</div>
+      </div>
+    `).reverse().join('');
+    
+    document.querySelectorAll('.mood-emoji').forEach(e => e.classList.remove('selected'));
+    state.currentMood = null;
+    document.getElementById('stress-slider').value = 5;
+    document.getElementById('stress-val').textContent = 5;
+  }
+
+  function analyzeMentalHealth() {
+    if (state.mentalLogs.length === 0) {
+      document.getElementById('mental-analysis-output').innerHTML = '<div class="ai-response" style="color:var(--text-warning)">Please log your mood and stress first to get an analysis!</div>';
+      return;
+    }
+    const logs = state.mentalLogs.map(l => `At ${l.time}, Mood: ${l.mood}, Stress: ${l.stress}/10`).join('\n');
+    callAgent(`Analyze my recent mental health logs and provide constructive advice for relaxation and mental wellbeing.\n\nLogs:\n${logs}`, document.getElementById('mental-analysis-output'));
+  }
+
+  // ─── Init ─────────────────────────────────────────────────────
+  const savedKey = sessionStorage.getItem('anthropic_api_key');
+  if (savedKey) document.getElementById('p-apikey').value = savedKey;
+  updateAnalysisPanel();
+
+  // ─── Emergency Location ───────────────────────────────────────
+  function detectLocation() {
+    const display = document.getElementById('location-display');
+    const btn = document.getElementById('btn-location');
+    
+    if (!navigator.geolocation) {
+      display.textContent = "Geolocation is not supported by your browser.";
+      return;
+    }
+    
+    btn.textContent = "Detecting...";
+    btn.disabled = true;
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude.toFixed(6);
+        const lon = position.coords.longitude.toFixed(6);
+        const mapUrl = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
+        display.innerHTML = `
+          <div style="margin-bottom: 12px;">
+            <strong>Latitude:</strong> ${lat} &nbsp;|&nbsp; <strong>Longitude:</strong> ${lon}
+          </div>
+          <iframe width="100%" height="250" style="border:1px solid var(--border-secondary); border-radius:8px; margin-bottom:12px; background:var(--bg-primary);" loading="lazy" allowfullscreen src="${mapUrl}"></iframe>
+          <div style="text-align: center;">
+            <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" style="color:var(--primary);text-decoration:none;font-weight:600;font-size:15px;">Open in Google Maps App ↗</a>
+          </div>
+        `;
+        btn.textContent = "Update Location";
+        btn.disabled = false;
+      },
+      (error) => {
+        let errorMsg = "Unable to retrieve your location.";
+        if (error.code === error.PERMISSION_DENIED) errorMsg += " Please allow location access in your browser.";
+        display.textContent = errorMsg;
+        btn.textContent = "Detect Location";
+        btn.disabled = false;
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  }
+
+  // ─── Ambulance Contacts Modal ─────────────────────────────────
+  const AMB_DATA = [
+    { region: 'National / Universal', name: 'National Emergency Number',    sub: 'All India',               num: '112' },
+    { region: 'National / Universal', name: 'Ambulance (National)',          sub: 'All India',               num: '108' },
+    { region: 'National / Universal', name: 'AIIMS Emergency',               sub: 'New Delhi',               num: '011-26589142' },
+    { region: 'National / Universal', name: 'Red Cross Ambulance',           sub: 'New Delhi HQ',            num: '011-23716441' },
+
+    { region: 'Delhi & NCR',          name: 'Delhi Ambulance Service',       sub: 'New Delhi',               num: '102' },
+    { region: 'Delhi & NCR',          name: 'CATS Ambulance',                sub: 'Delhi (Centralised)',     num: '1099' },
+    { region: 'Delhi & NCR',          name: 'Safdarjung Hospital',           sub: 'New Delhi',               num: '011-26707444' },
+    { region: 'Delhi & NCR',          name: 'AIIMS Emergency',               sub: 'New Delhi',               num: '011-26589142' },
+    { region: 'Delhi & NCR',          name: 'Gurgaon Emergency',             sub: 'Haryana',                 num: '0124-4266000' },
+    { region: 'Delhi & NCR',          name: 'Noida Emergency',               sub: 'Uttar Pradesh',           num: '0120-2444444' },
+
+    { region: 'Maharashtra',          name: 'Mumbai Ambulance',              sub: 'Mumbai',                  num: '022-23076000' },
+    { region: 'Maharashtra',          name: 'Maharashtra 108 Ambulance',     sub: 'State-wide',              num: '108' },
+    { region: 'Maharashtra',          name: 'KEM Hospital Emergency',        sub: 'Mumbai',                  num: '022-24107000' },
+    { region: 'Maharashtra',          name: 'Pune Emergency Ambulance',      sub: 'Pune',                    num: '020-27475050' },
+    { region: 'Maharashtra',          name: 'Nagpur Emergency',              sub: 'Nagpur',                  num: '0712-2533333' },
+
+    { region: 'Karnataka',            name: 'Karnataka 108 Ambulance',       sub: 'State-wide',              num: '108' },
+    { region: 'Karnataka',            name: 'Bangalore Emergency',           sub: 'Bengaluru',               num: '080-22221111' },
+    { region: 'Karnataka',            name: 'Manipal Hospital Emergency',    sub: 'Bengaluru',               num: '080-25024444' },
+    { region: 'Karnataka',            name: 'Mysuru District Ambulance',     sub: 'Mysuru',                  num: '0821-2440880' },
+
+    { region: 'Tamil Nadu',           name: 'Tamil Nadu 108 Ambulance',      sub: 'State-wide',              num: '108' },
+    { region: 'Tamil Nadu',           name: 'Chennai Emergency',             sub: 'Chennai',                 num: '044-24990001' },
+    { region: 'Tamil Nadu',           name: 'Apollo Hospital Emergency',     sub: 'Chennai',                 num: '044-28290200' },
+    { region: 'Tamil Nadu',           name: 'Coimbatore Emergency',          sub: 'Coimbatore',              num: '0422-4344444' },
+
+    { region: 'West Bengal',          name: 'West Bengal 108 Ambulance',     sub: 'State-wide',              num: '108' },
+    { region: 'West Bengal',          name: 'Kolkata Emergency',             sub: 'Kolkata',                 num: '033-22143526' },
+    { region: 'West Bengal',          name: 'SSKM Hospital Emergency',       sub: 'Kolkata',                 num: '033-22041739' },
+
+    { region: 'Gujarat',              name: 'Gujarat 108 Ambulance',         sub: 'State-wide',              num: '108' },
+    { region: 'Gujarat',              name: 'Ahmedabad Emergency',           sub: 'Ahmedabad',               num: '079-25502570' },
+    { region: 'Gujarat',              name: 'Surat Emergency',               sub: 'Surat',                   num: '0261-2770000' },
+
+    { region: 'Rajasthan',            name: 'Rajasthan 108 Ambulance',       sub: 'State-wide',              num: '108' },
+    { region: 'Rajasthan',            name: 'Jaipur Emergency',              sub: 'Jaipur',                  num: '0141-2560291' },
+    { region: 'Rajasthan',            name: 'SMS Hospital Emergency',        sub: 'Jaipur',                  num: '0141-2518888' },
+
+    { region: 'Telangana & AP',       name: 'Telangana 108 Ambulance',       sub: 'State-wide',              num: '108' },
+    { region: 'Telangana & AP',       name: 'Hyderabad Emergency',           sub: 'Hyderabad',               num: '040-23450000' },
+    { region: 'Telangana & AP',       name: 'Andhra Pradesh 108',            sub: 'State-wide AP',           num: '108' },
+
+    { region: 'Kerala',               name: 'Kerala 108 Ambulance',          sub: 'State-wide',              num: '108' },
+    { region: 'Kerala',               name: 'Thiruvananthapuram Emergency',  sub: 'Thiruvananthapuram',      num: '0471-2528500' },
+    { region: 'Kerala',               name: 'Kochi Emergency',               sub: 'Ernakulam',               num: '0484-2392000' },
+
+    { region: 'Punjab & Haryana',     name: 'Punjab 108 Ambulance',          sub: 'State-wide Punjab',       num: '108' },
+    { region: 'Punjab & Haryana',     name: 'Chandigarh Emergency',          sub: 'Chandigarh',              num: '0172-2741770' },
+    { region: 'Punjab & Haryana',     name: 'PGI Emergency',                 sub: 'Chandigarh',              num: '0172-2755555' },
+    { region: 'Punjab & Haryana',     name: 'Haryana 108 Ambulance',         sub: 'State-wide Haryana',      num: '108' },
+
+    { region: 'Uttar Pradesh',        name: 'UP 108 Ambulance',              sub: 'State-wide',              num: '108' },
+    { region: 'Uttar Pradesh',        name: 'Lucknow Emergency',             sub: 'Lucknow',                 num: '0522-2236666' },
+    { region: 'Uttar Pradesh',        name: 'KGMU Emergency',                sub: 'Lucknow',                 num: '0522-2258900' },
+    { region: 'Uttar Pradesh',        name: 'Varanasi Emergency',            sub: 'Varanasi',                num: '0542-2508000' },
+
+    { region: 'Madhya Pradesh',       name: 'MP 108 Ambulance',              sub: 'State-wide',              num: '108' },
+    { region: 'Madhya Pradesh',       name: 'Bhopal Emergency',              sub: 'Bhopal',                  num: '0755-2578900' },
+    { region: 'Madhya Pradesh',       name: 'Indore Emergency',              sub: 'Indore',                  num: '0731-2527000' },
+
+    { region: 'Odisha',               name: 'Odisha 108 Ambulance',          sub: 'State-wide',              num: '108' },
+    { region: 'Odisha',               name: 'Bhubaneswar Emergency',         sub: 'Bhubaneswar',             num: '0674-2596777' },
+
+    { region: 'Bihar & Jharkhand',    name: 'Bihar 102 Ambulance',           sub: 'State-wide Bihar',        num: '102' },
+    { region: 'Bihar & Jharkhand',    name: 'Patna Emergency',               sub: 'Patna',                   num: '0612-2202503' },
+    { region: 'Bihar & Jharkhand',    name: 'Jharkhand 108 Ambulance',       sub: 'State-wide Jharkhand',    num: '108' },
+    { region: 'Bihar & Jharkhand',    name: 'Ranchi Emergency',              sub: 'Ranchi',                  num: '0651-2211500' },
+
+    { region: 'North-East India',     name: 'Assam 108 Ambulance',           sub: 'State-wide Assam',        num: '108' },
+    { region: 'North-East India',     name: 'Guwahati Emergency',            sub: 'Guwahati',                num: '0361-2529457' },
+    { region: 'North-East India',     name: 'Manipur Emergency',             sub: 'Imphal',                  num: '0385-2450111' },
+    { region: 'North-East India',     name: 'Meghalaya Emergency',           sub: 'Shillong',                num: '0364-2223333' },
+  ];
+
+  let filteredAmb = [...AMB_DATA];
+
+  function renderAmb(data) {
+    const list = document.getElementById('amb-list');
+    if (!data.length) {
+      list.innerHTML = '<div class="amb-no-results">😕 No results found. Try a different state or city.</div>';
+      return;
+    }
+    const groups = {};
+    data.forEach(d => { (groups[d.region] = groups[d.region] || []).push(d); });
+    list.innerHTML = Object.entries(groups).map(([region, entries]) => `
+      <div class="amb-region-title">${region}</div>
+      ${entries.map(e => `
+        <div class="amb-entry">
+          <div>
+            <div class="amb-entry-name">${e.name}</div>
+            <div class="amb-entry-sub">${e.sub}</div>
+          </div>
+          <a href="tel:${e.num}" class="amb-dial-btn">📞 ${e.num}</a>
+        </div>
+      `).join('')}
+    `).join('');
+  }
+
+  function filterAmb(query) {
+    const q = query.toLowerCase().trim();
+    filteredAmb = q ? AMB_DATA.filter(d =>
+      d.name.toLowerCase().includes(q) ||
+      d.sub.toLowerCase().includes(q) ||
+      d.region.toLowerCase().includes(q) ||
+      d.num.includes(q)
+    ) : [...AMB_DATA];
+    renderAmb(filteredAmb);
+  }
+
+  function openAmbModal() {
+    document.getElementById('amb-modal-overlay').classList.add('open');
+    document.getElementById('amb-search').value = '';
+    renderAmb(AMB_DATA);
+    setTimeout(() => document.getElementById('amb-search').focus(), 100);
+  }
+
+  function closeAmbModal() {
+    document.getElementById('amb-modal-overlay').classList.remove('open');
+  }
+</script>
+</body>
+</html>
